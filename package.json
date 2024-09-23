@@ -2,11 +2,11 @@
   "name": "prod-api-nodejs",
   "version": "1.0.0",
   "description": "Production ready API implementation using Node.js.",
-  "main": "index.js",
+  "main": "src/server.ts",
   "scripts": {
     "build": "npx tsc",
-    "dev": "nodemon src/index.ts",
-    "start": "node build/index.js",
+    "dev": "nodemon src/server.ts",
+    "start": "node build/server.js",
     "prepare": "husky"
   },
   "author": "Ahmed A.",
