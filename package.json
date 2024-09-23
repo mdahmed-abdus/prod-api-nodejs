@@ -1,0 +1,11 @@
+{
+  "name": "prod-api-nodejs",
+  "version": "1.0.0",
+  "description": "Production ready API implementation using Node.js.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Ahmed A.",
+  "license": "ISC"
+}
