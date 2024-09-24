@@ -1,0 +1,4 @@
+{
+  "ext": ".ts",
+  "ignore": ["build", "node_modules"]
+}

@@ -1,0 +1,13 @@
+import dotenvFlow from 'dotenv-flow'
+
+dotenvFlow.config()
+
+export default {
+  // Server
+  ENV: process.env.ENV,
+  PORT: process.env.PORT,
+  SERVER_URL: process.env.URL,
+
+  // Database
+  DATABASE_URL: process.env.DATABASE_URL
+}
