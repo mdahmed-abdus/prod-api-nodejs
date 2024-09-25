@@ -3,6 +3,7 @@ import config from '../config/config'
 import { EApplicationEnvironment } from '../constant/application'
 import responseMessage from '../constant/responseMessage'
 import { THttpError } from '../types/types'
+import logger from './logger'
 
 // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export default (error: Error | unknown, req: Request, errorStatusCode: number = 500): THttpError => {
@@ -19,8 +20,7 @@ export default (error: Error | unknown, req: Request, errorStatusCode: number = 
     trace: error instanceof Error ? { error: error.stack } : null
   }
 
-  // eslint-disable-next-line no-console
-  console.info('Controller error', { meta: errorObj })
+  logger.info('Controller error', { meta: errorObj })
 
   if (config.ENV === EApplicationEnvironment.PRODUCTION) {
     delete errorObj.request.ip

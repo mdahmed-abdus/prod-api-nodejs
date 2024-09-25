@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import config from '../config/config'
 import { EApplicationEnvironment } from '../constant/application'
 import { THttpResponse } from '../types/types'
+import logger from './logger'
 
 export default (req: Request, res: Response, resStatusCode: number, resMessage: string, data: unknown = null): void => {
   const response: THttpResponse = {
@@ -16,8 +17,7 @@ export default (req: Request, res: Response, resStatusCode: number, resMessage: 
     data: data
   }
 
-  // eslint-disable-next-line no-console
-  console.info('Controller response', { meta: response })
+  logger.info('Controller response', { meta: response })
 
   if (config.ENV === EApplicationEnvironment.PRODUCTION) {
     delete response.request.ip
