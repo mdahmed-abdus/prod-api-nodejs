@@ -3,6 +3,8 @@ import path from 'path'
 import * as sourceMapSupport from 'source-map-support'
 import util from 'util'
 import { createLogger, format, transports } from 'winston'
+import 'winston-mongodb'
+import { MongoDBTransportInstance } from 'winston-mongodb'
 import { ConsoleTransportInstance, FileTransportInstance } from 'winston/lib/winston/transports'
 import config from '../config/config'
 import { EApplicationEnvironment } from '../constant/application'
@@ -85,9 +87,22 @@ const fileTransport = (): Array<FileTransportInstance> => {
   ]
 }
 
+const mongoDbTransport = (): Array<MongoDBTransportInstance> => {
+  return [
+    new transports.MongoDB({
+      level: 'info',
+      db: config.DATABASE_URL as string,
+      options: { useUnifiedTopology: true },
+      metaKey: 'meta',
+      expireAfterSeconds: 3600 * 24 * 30,
+      collection: 'application-logs'
+    })
+  ]
+}
+
 export default createLogger({
   defaultMeta: {
     meta: {}
   },
-  transports: [...fileTransport(), ...consoleTransport()]
+  transports: [...fileTransport(), ...mongoDbTransport(), ...consoleTransport()]
 })
