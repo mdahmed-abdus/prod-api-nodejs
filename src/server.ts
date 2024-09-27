@@ -1,6 +1,8 @@
 import { error } from 'console'
+import { connection } from 'mongoose'
 import app from './app'
 import config from './config/config'
+import { initRateLimiter } from './config/rateLimiter'
 import dbService from './service/dbService'
 import logger from './utils/logger'
 
@@ -11,6 +13,10 @@ const server = app.listen(config.PORT)
   try {
     const conn = await dbService.connect()
     logger.info('Database connection', { meta: { connectionName: conn.name } })
+
+    initRateLimiter(connection)
+    logger.info('Rate limiter initiated')
+
     logger.info('Server is running...', { meta: { PORT: config.PORT, SERVER_URL: config.SERVER_URL } })
   } catch {
     logger.error('Server error. Server is not running.', { meta: error })
