@@ -13,5 +13,7 @@ export default {
     }
   },
   findUserByEmail: (email: string) => userModel.findOne({ email }),
-  registerUser: (payload: IUser) => userModel.create(payload)
+  registerUser: (payload: IUser) => userModel.create(payload),
+  findUserByConfirmationTokenAndCode: (token: string, code: string) =>
+    userModel.findOne({ 'accountConfirmation.token': token, 'accountConfirmation.code': code })
 }

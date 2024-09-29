@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { NextFunction, Request, Response } from 'express'
 import config from '../config/config'
 import responseMessage from '../constant/responseMessage'
@@ -11,8 +13,19 @@ import httpResponse from '../utils/httpResponse'
 import logger from '../utils/logger'
 import quicker from '../utils/quicker'
 
+dayjs.extend(utc)
+
 interface IRegisterRequest extends Request {
   body: IRegisterRequestBody
+}
+
+interface IConfirmRequest extends Request {
+  params: {
+    token: string
+  }
+  query: {
+    code: string
+  }
 }
 
 export default {
@@ -92,6 +105,40 @@ export default {
       })
 
       httpResponse(req, res, 201, responseMessage.SUCCESS, { _id: newUser._id })
+    } catch (error) {
+      httpError(next, error, req, 500)
+    }
+  },
+  confirmation: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { params, query } = req as IConfirmRequest
+      const { token } = params
+      const { code } = query
+
+      const user = await dbService.findUserByConfirmationTokenAndCode(token, code)
+      if (!user) {
+        return httpError(next, new Error(responseMessage.INVALID_CONFIRMATION_TOKEN_OR_CODE), req, 400)
+      }
+
+      if (user.accountConfirmation.status) {
+        return httpError(next, new Error(responseMessage.ACCOUNT_ALREADY_CONFIRMED), req, 400)
+      }
+
+      user.accountConfirmation.status = true
+      user.accountConfirmation.timestamp = dayjs().utc().toDate()
+
+      await user.save()
+
+      const to = [user.email]
+      const subject = 'Account confirmed'
+      const text = 'Your account has been confirmed'
+
+      emailService.sendMail(to, subject, text).catch((error) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        logger.error('Email service', { meta: error })
+      })
+
+      httpResponse(req, res, 200, responseMessage.SUCCESS)
     } catch (error) {
       httpError(next, error, req, 500)
     }
