@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken'
 import { parsePhoneNumber } from 'libphonenumber-js'
 import os from 'os'
 import { v4 } from 'uuid'
-import config from '../config/config'
+import config from '../config'
 
 export default {
   getDomainFromUrl: (url: string) => {
@@ -25,8 +25,12 @@ export default {
     environment: config.ENV,
     upTime: `${process.uptime().toFixed(2)} seconds`,
     memoryUsage: {
-      heapTotal: `${(process.memoryUsage().heapTotal / 1024 / 1024).toFixed(2)} MB`,
-      heapUsed: `${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB`
+      heapTotal: `${(process.memoryUsage().heapTotal / 1024 / 1024).toFixed(
+        2
+      )} MB`,
+      heapUsed: `${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(
+        2
+      )} MB`
     }
   }),
   parsePhoneNumber: (phoneNumber: string) => {
@@ -56,14 +60,17 @@ export default {
   },
   countryTimezone: (isoCode: string) => getTimezonesForCountry(isoCode),
   hashPassword: (password: string) => bcrypt.hash(password, 10),
-  comparePassword: (password: string, hashedPassword: string) => bcrypt.compare(password, hashedPassword),
+  comparePassword: (password: string, hashedPassword: string) =>
+    bcrypt.compare(password, hashedPassword),
   generateRandomId: v4,
   generateOtp: (length: number) => {
     const min = Math.pow(10, length - 1)
     const max = Math.pow(10, length) - 1
     return randomInt(min, max).toString()
   },
-  generateToken: (payload: object, secret: string, expiry: number) => jwt.sign(payload, secret, { expiresIn: expiry }),
+  generateToken: (payload: object, secret: string, expiry: number) =>
+    jwt.sign(payload, secret, { expiresIn: expiry }),
   verifyToken: (token: string, secret: string) => jwt.verify(token, secret),
-  generatePasswordResetExpiry: (minutes: number) => dayjs().valueOf() + minutes * 60 * 1000
+  generatePasswordResetExpiry: (minutes: number) =>
+    dayjs().valueOf() + minutes * 60 * 1000
 }

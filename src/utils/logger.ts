@@ -5,9 +5,11 @@ import util from 'util'
 import { createLogger, format, transports } from 'winston'
 import 'winston-mongodb'
 import { MongoDBTransportInstance } from 'winston-mongodb'
-import { ConsoleTransportInstance, FileTransportInstance } from 'winston/lib/winston/transports'
-import config from '../config/config'
-import { EApplicationEnvironment } from '../constant/application'
+import {
+  ConsoleTransportInstance,
+  FileTransportInstance
+} from 'winston/lib/winston/transports'
+import config from '../config'
 
 sourceMapSupport.install()
 
@@ -32,9 +34,15 @@ const consoleLogFormat = format.printf((info) => {
   const customTimeStamp = green(timestamp as string)
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const customMessage = message
-  const customMeta = util.inspect(meta, { showHidden: false, depth: null, colors: true })
+  const customMeta = util.inspect(meta, {
+    showHidden: false,
+    depth: null,
+    colors: true
+  })
 
-  return `${customLevel} [${customTimeStamp}] ${customMessage}\n${magenta('META')} ${customMeta}\n`
+  return `${customLevel} [${customTimeStamp}] ${customMessage}\n${magenta(
+    'META'
+  )} ${customMeta}\n`
 })
 
 const fileLogFormat = format.printf((info) => {
@@ -46,7 +54,11 @@ const fileLogFormat = format.printf((info) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   for (const [key, value] of Object.entries(meta)) {
     if (value instanceof Error) {
-      logMeta[key] = { name: value.name, message: value.message, trace: value.stack }
+      logMeta[key] = {
+        name: value.name,
+        message: value.message,
+        trace: value.stack
+      }
     } else {
       logMeta[key] = value
     }
@@ -65,7 +77,7 @@ const fileLogFormat = format.printf((info) => {
 })
 
 const consoleTransport = (): Array<ConsoleTransportInstance> => {
-  if (config.ENV === EApplicationEnvironment.DEVELOPMENT) {
+  if (config.IN_DEV) {
     return [
       new transports.Console({
         level: 'info',
@@ -91,7 +103,7 @@ const mongoDbTransport = (): Array<MongoDBTransportInstance> => {
   return [
     new transports.MongoDB({
       level: 'info',
-      db: config.DATABASE_URL as string,
+      db: config.DATABASE_URL,
       options: { useUnifiedTopology: true },
       metaKey: 'meta',
       expireAfterSeconds: 3600 * 24 * 30,

@@ -1,12 +1,11 @@
 import { NextFunction, Request, Response } from 'express'
-import config from '../config/config'
+import config from '../config'
 import { rateLimiterMongo } from '../config/rateLimiter'
-import { EApplicationEnvironment } from '../constant/application'
 import responseMessage from '../constant/responseMessage'
 import httpError from '../utils/httpError'
 
 export default (req: Request, _: Response, next: NextFunction) => {
-  if (config.ENV === EApplicationEnvironment.DEVELOPMENT) {
+  if (config.IN_DEV) {
     return next()
   }
 

@@ -1,5 +1,5 @@
 import { Resend } from 'resend'
-import config from '../config/config'
+import config from '../config'
 
 const resend = new Resend(config.EMAIL_SERVICE_API_KEY)
 

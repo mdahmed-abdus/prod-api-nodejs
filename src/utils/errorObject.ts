@@ -1,12 +1,15 @@
 import { Request } from 'express'
-import config from '../config/config'
-import { EApplicationEnvironment } from '../constant/application'
+import config from '../config'
 import responseMessage from '../constant/responseMessage'
 import { THttpError } from '../types/types'
 import logger from './logger'
 
-// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-export default (error: Error | unknown, req: Request, errorStatusCode: number = 500): THttpError => {
+export default (
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+  error: Error | unknown,
+  req: Request,
+  errorStatusCode: number = 500
+): THttpError => {
   const errorObj: THttpError = {
     success: false,
     statusCode: errorStatusCode,
@@ -15,14 +18,17 @@ export default (error: Error | unknown, req: Request, errorStatusCode: number = 
       method: req.method,
       url: req.originalUrl
     },
-    message: error instanceof Error ? error.message || responseMessage.SOMETHING_WENT_WRONG : responseMessage.SOMETHING_WENT_WRONG,
+    message:
+      error instanceof Error
+        ? error.message || responseMessage.SOMETHING_WENT_WRONG
+        : responseMessage.SOMETHING_WENT_WRONG,
     data: null,
     trace: error instanceof Error ? { error: error.stack } : null
   }
 
   logger.info('Controller error', { meta: errorObj })
 
-  if (config.ENV === EApplicationEnvironment.PRODUCTION) {
+  if (config.IN_PROD) {
     delete errorObj.request.ip
     delete errorObj.trace
   }

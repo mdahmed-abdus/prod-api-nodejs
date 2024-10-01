@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import config from '../config/config'
+import config from '../config'
 import responseMessage from '../constant/responseMessage'
 import dbService from '../service/dbService'
 import { IDecryptedJwt, IUser } from '../types/userTypes'
@@ -18,14 +18,27 @@ export default async (req: Request, _res: Response, next: NextFunction) => {
     const { accessToken } = cookies as { accessToken: string | undefined }
 
     if (!accessToken) {
-      return httpError(next, new Error(responseMessage.UNAUTHORIZED), request, 401)
+      return httpError(
+        next,
+        new Error(responseMessage.UNAUTHORIZED),
+        request,
+        401
+      )
     }
 
-    const { userId } = quicker.verifyToken(accessToken, config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET as string) as IDecryptedJwt
+    const { userId } = quicker.verifyToken(
+      accessToken,
+      config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET
+    ) as IDecryptedJwt
 
     const user = await dbService.findUserById(userId)
     if (!user) {
-      return httpError(next, new Error(responseMessage.UNAUTHORIZED), request, 401)
+      return httpError(
+        next,
+        new Error(responseMessage.UNAUTHORIZED),
+        request,
+        401
+      )
     }
 
     request.authenticatedUser = user

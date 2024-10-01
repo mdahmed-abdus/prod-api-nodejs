@@ -1,8 +1,7 @@
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { NextFunction, Request, Response } from 'express'
-import config from '../config/config'
-import { EApplicationEnvironment } from '../constant/application'
+import config from '../config'
 import responseMessage from '../constant/responseMessage'
 import { EUserRole } from '../constant/userConstant'
 import dbService from '../service/dbService'
@@ -100,26 +99,45 @@ export default {
     try {
       const { body } = req as IRegisterRequest
 
-      const { value, error } = validateJoiSchema<IRegisterRequestBody>(validateRegisterBody, body)
+      const { value, error } = validateJoiSchema<IRegisterRequestBody>(
+        validateRegisterBody,
+        body
+      )
       if (error) {
         return httpError(next, error, req, 422)
       }
 
       const { name, phoneNumber, email, password, consent } = value
-      const { countryCode, internationalNumber, isoCode } = quicker.parsePhoneNumber('+' + phoneNumber)
+      const { countryCode, internationalNumber, isoCode } =
+        quicker.parsePhoneNumber('+' + phoneNumber)
 
       if (!countryCode || !internationalNumber || !isoCode) {
-        return httpError(next, new Error(responseMessage.INVALID_PHONE_NUMBER), req, 422)
+        return httpError(
+          next,
+          new Error(responseMessage.INVALID_PHONE_NUMBER),
+          req,
+          422
+        )
       }
 
       const timezone = quicker.countryTimezone(isoCode)
       if (!timezone || timezone.length === 0) {
-        return httpError(next, new Error(responseMessage.INVALID_PHONE_NUMBER), req, 422)
+        return httpError(
+          next,
+          new Error(responseMessage.INVALID_PHONE_NUMBER),
+          req,
+          422
+        )
       }
 
       const user = await dbService.findUserByEmail(email)
       if (user) {
-        return httpError(next, new Error(responseMessage.ALREADY_EXISTS('user', email)), req, 422)
+        return httpError(
+          next,
+          new Error(responseMessage.ALREADY_EXISTS('user', email)),
+          req,
+          422
+        )
       }
 
       const hashedPassword = await quicker.hashPassword(password)
@@ -163,13 +181,26 @@ export default {
       const { token } = params
       const { code } = query
 
-      const user = await dbService.findUserByConfirmationTokenAndCode(token, code)
+      const user = await dbService.findUserByConfirmationTokenAndCode(
+        token,
+        code
+      )
       if (!user) {
-        return httpError(next, new Error(responseMessage.INVALID_CONFIRMATION_TOKEN_OR_CODE), req, 400)
+        return httpError(
+          next,
+          new Error(responseMessage.INVALID_CONFIRMATION_TOKEN_OR_CODE),
+          req,
+          400
+        )
       }
 
       if (user.accountConfirmation.status) {
-        return httpError(next, new Error(responseMessage.ACCOUNT_ALREADY_CONFIRMED), req, 400)
+        return httpError(
+          next,
+          new Error(responseMessage.ACCOUNT_ALREADY_CONFIRMED),
+          req,
+          400
+        )
       }
 
       user.accountConfirmation.status = true
@@ -195,7 +226,10 @@ export default {
     try {
       const { body } = req as ILoginRequest
 
-      const { value, error } = validateJoiSchema<ILoginRequestBody>(validateLoginBody, body)
+      const { value, error } = validateJoiSchema<ILoginRequestBody>(
+        validateLoginBody,
+        body
+      )
       if (error) {
         return httpError(next, error, req, 422)
       }
@@ -204,23 +238,36 @@ export default {
 
       const user = await dbService.findUserByEmail(email, '+password')
       if (!user) {
-        return httpError(next, new Error(responseMessage.NOT_FOUND('user')), req, 404)
+        return httpError(
+          next,
+          new Error(responseMessage.NOT_FOUND('user')),
+          req,
+          404
+        )
       }
 
-      const isValidPassword = await quicker.comparePassword(password, user.password)
+      const isValidPassword = await quicker.comparePassword(
+        password,
+        user.password
+      )
       if (!isValidPassword) {
-        return httpError(next, new Error(responseMessage.INVALID_EMAIL_OR_PASSWORD), req, 400)
+        return httpError(
+          next,
+          new Error(responseMessage.INVALID_EMAIL_OR_PASSWORD),
+          req,
+          400
+        )
       }
 
       const accessToken = quicker.generateToken(
         { userId: user._id, userRole: user.role },
-        config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET as string,
+        config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET,
         config.ACCESS_TOKEN.EXPIRY
       )
 
       const refreshToken = quicker.generateToken(
         { userId: user._id, userRole: user.role },
-        config.REFRESH_TOKEN.REFRESH_TOKEN_SECRET as string,
+        config.REFRESH_TOKEN.REFRESH_TOKEN_SECRET,
         config.REFRESH_TOKEN.EXPIRY
       )
 
@@ -231,7 +278,7 @@ export default {
       user.lastLoginAt = dayjs().utc().toDate()
       await user.save()
 
-      const domain = quicker.getDomainFromUrl(config.SERVER_URL as string)
+      const domain = quicker.getDomainFromUrl(config.APP_URL)
 
       res
         .cookie('accessToken', accessToken, {
@@ -240,7 +287,7 @@ export default {
           sameSite: 'strict',
           maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
           httpOnly: true,
-          secure: config.ENV === EApplicationEnvironment.PRODUCTION
+          secure: config.IN_PROD
         })
         .cookie('refreshToken', refreshToken, {
           path: '/api/v1',
@@ -248,17 +295,19 @@ export default {
           sameSite: 'strict',
           maxAge: 1000 * config.REFRESH_TOKEN.EXPIRY,
           httpOnly: true,
-          secure: config.ENV === EApplicationEnvironment.PRODUCTION
+          secure: config.IN_PROD
         })
 
-      httpResponse(req, res, 200, responseMessage.SUCCESS, { accessToken, refreshToken })
+      httpResponse(req, res, 200, responseMessage.SUCCESS, {
+        accessToken,
+        refreshToken
+      })
     } catch (error) {
       httpError(next, error, req, 500)
     }
   },
   logout: async (req: Request, res: Response, next: NextFunction) => {
     try {
-       
       const { cookies } = req
       const { refreshToken } = cookies as { refreshToken: string | null }
 
@@ -266,7 +315,7 @@ export default {
         await dbService.deleteRefreshToken(refreshToken)
       }
 
-      const domain = quicker.getDomainFromUrl(config.SERVER_URL as string)
+      const domain = quicker.getDomainFromUrl(config.APP_URL)
 
       res
         .clearCookie('accessToken', {
@@ -275,7 +324,7 @@ export default {
           sameSite: 'strict',
           maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
           httpOnly: true,
-          secure: config.ENV === EApplicationEnvironment.PRODUCTION
+          secure: config.IN_PROD
         })
         .clearCookie('refreshToken', {
           path: '/api/v1',
@@ -283,7 +332,7 @@ export default {
           sameSite: 'strict',
           maxAge: 1000 * config.REFRESH_TOKEN.EXPIRY,
           httpOnly: true,
-          secure: config.ENV === EApplicationEnvironment.PRODUCTION
+          secure: config.IN_PROD
         })
 
       httpResponse(req, res, 200, responseMessage.SUCCESS)
@@ -293,39 +342,62 @@ export default {
   },
   refreshToken: async (req: Request, res: Response, next: NextFunction) => {
     try {
-       
       const { cookies } = req
-      const { refreshToken, accessToken } = cookies as { refreshToken: string | null; accessToken: string | null }
+      const { refreshToken, accessToken } = cookies as {
+        refreshToken: string | null
+        accessToken: string | null
+      }
 
       if (accessToken) {
         try {
-          const verifiedAccessToken = quicker.verifyToken(accessToken, config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET as string) as IDecryptedJwt
+          const verifiedAccessToken = quicker.verifyToken(
+            accessToken,
+            config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET
+          ) as IDecryptedJwt
 
           if (verifiedAccessToken) {
             return httpResponse(req, res, 304, responseMessage.SUCCESS)
           }
         } catch {
-          return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401)
+          return httpError(
+            next,
+            new Error(responseMessage.UNAUTHORIZED),
+            req,
+            401
+          )
         }
       }
 
       if (!refreshToken) {
-        return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401)
+        return httpError(
+          next,
+          new Error(responseMessage.UNAUTHORIZED),
+          req,
+          401
+        )
       }
 
       const rft = await dbService.getRefreshToken(refreshToken)
       if (!rft) {
-        return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401)
+        return httpError(
+          next,
+          new Error(responseMessage.UNAUTHORIZED),
+          req,
+          401
+        )
       }
 
-      const domain = quicker.getDomainFromUrl(config.SERVER_URL as string)
+      const domain = quicker.getDomainFromUrl(config.APP_URL)
 
       try {
-        const { userId, userRole } = quicker.verifyToken(refreshToken, config.REFRESH_TOKEN.REFRESH_TOKEN_SECRET as string) as IDecryptedJwt
+        const { userId, userRole } = quicker.verifyToken(
+          refreshToken,
+          config.REFRESH_TOKEN.REFRESH_TOKEN_SECRET
+        ) as IDecryptedJwt
 
         const newAccessToken = quicker.generateToken(
           { userId, userRole },
-          config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET as string,
+          config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET,
           config.ACCESS_TOKEN.EXPIRY
         )
 
@@ -335,12 +407,17 @@ export default {
           sameSite: 'strict',
           maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
           httpOnly: true,
-          secure: config.ENV === EApplicationEnvironment.PRODUCTION
+          secure: config.IN_PROD
         })
 
         httpResponse(req, res, 200, responseMessage.SUCCESS)
       } catch {
-        return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401)
+        return httpError(
+          next,
+          new Error(responseMessage.UNAUTHORIZED),
+          req,
+          401
+        )
       }
     } catch (error) {
       httpError(next, error, req, 500)
@@ -350,7 +427,10 @@ export default {
     try {
       const { body } = req as IForgotPasswordRequest
 
-      const { error, value } = validateJoiSchema<IForgotPasswordRequestBody>(validateForgotPasswordBody, body)
+      const { error, value } = validateJoiSchema<IForgotPasswordRequestBody>(
+        validateForgotPasswordBody,
+        body
+      )
       if (error) {
         return httpError(next, error, req, 422)
       }
@@ -359,11 +439,21 @@ export default {
 
       const user = await dbService.findUserByEmail(email)
       if (!user) {
-        return httpError(next, new Error(responseMessage.NOT_FOUND('user')), req, 404)
+        return httpError(
+          next,
+          new Error(responseMessage.NOT_FOUND('user')),
+          req,
+          404
+        )
       }
 
       if (!user.accountConfirmation.status) {
-        return httpError(next, new Error(responseMessage.ACCOUNT_CONFIRMATION_REQUIRED), req, 400)
+        return httpError(
+          next,
+          new Error(responseMessage.ACCOUNT_CONFIRMATION_REQUIRED),
+          req,
+          400
+        )
       }
 
       const token = quicker.generateRandomId()
@@ -391,7 +481,10 @@ export default {
   resetPassword: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { body, params } = req as IResetPasswordRequest
-      const { error, value } = validateJoiSchema<IResetPasswordRequestBody>(validateResetPasswordBody, body)
+      const { error, value } = validateJoiSchema<IResetPasswordRequestBody>(
+        validateResetPasswordBody,
+        body
+      )
       if (error) {
         return httpError(next, error, req, 422)
       }
@@ -399,18 +492,33 @@ export default {
       const { token } = params
       const user = await dbService.findUserByResetToken(token)
       if (!user) {
-        return httpError(next, new Error(responseMessage.NOT_FOUND('user')), req, 404)
+        return httpError(
+          next,
+          new Error(responseMessage.NOT_FOUND('user')),
+          req,
+          404
+        )
       }
 
       if (!user.accountConfirmation.status) {
-        return httpError(next, new Error(responseMessage.ACCOUNT_CONFIRMATION_REQUIRED), req, 400)
+        return httpError(
+          next,
+          new Error(responseMessage.ACCOUNT_CONFIRMATION_REQUIRED),
+          req,
+          400
+        )
       }
 
       const storedExpiry = user.passwordReset.expiry
       const currentTimestamp = dayjs().valueOf()
 
       if (!storedExpiry) {
-        return httpError(next, new Error(responseMessage.INVALID_REQUEST), req, 400)
+        return httpError(
+          next,
+          new Error(responseMessage.INVALID_REQUEST),
+          req,
+          400
+        )
       }
 
       if (currentTimestamp > storedExpiry) {
@@ -444,25 +552,49 @@ export default {
     try {
       const { body, authenticatedUser } = req as IChangePasswordRequest
 
-      const { error, value } = validateJoiSchema<IChangePasswordRequestBody>(validateChangePasswordBody, body)
+      const { error, value } = validateJoiSchema<IChangePasswordRequestBody>(
+        validateChangePasswordBody,
+        body
+      )
       if (error) {
         return httpError(next, error, req, 422)
       }
 
-      const user = await dbService.findUserById(authenticatedUser._id, '+password')
+      const user = await dbService.findUserById(
+        authenticatedUser._id,
+        '+password'
+      )
       if (!user) {
-        return httpError(next, new Error(responseMessage.NOT_FOUND('user')), req, 404)
+        return httpError(
+          next,
+          new Error(responseMessage.NOT_FOUND('user')),
+          req,
+          404
+        )
       }
 
       const { oldPassword, newPassword } = value
 
       if (newPassword === oldPassword) {
-        return httpError(next, new Error(responseMessage.PASSWORD_MATCHING_OLD_PASSWORD), req, 400)
+        return httpError(
+          next,
+          new Error(responseMessage.PASSWORD_MATCHING_OLD_PASSWORD),
+          req,
+          400
+        )
       }
 
-      const isOldPasswordValid = await quicker.comparePassword(oldPassword, user.password)
+      const isOldPasswordValid = await quicker.comparePassword(
+        oldPassword,
+        user.password
+      )
       if (!isOldPasswordValid) {
-        return httpError(next, new Error(responseMessage.INVALID_OLD_PASSWORD), req, 400)
+        return httpError(
+          next,
+          new Error(responseMessage.INVALID_OLD_PASSWORD),
+          req,
+          400
+        )
       }
 
       const hashedNewPassword = await quicker.hashPassword(newPassword)
