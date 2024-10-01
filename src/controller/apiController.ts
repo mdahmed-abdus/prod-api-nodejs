@@ -8,6 +8,7 @@ import { EUserRole } from '../constant/userConstant'
 import dbService from '../service/dbService'
 import emailService from '../service/emailService'
 import {
+  validateChangePasswordBody,
   validateForgotPasswordBody,
   validateJoiSchema,
   validateLoginBody,
@@ -15,13 +16,15 @@ import {
   validateResetPasswordBody
 } from '../service/validationService'
 import {
+  IChangePasswordRequestBody,
   IDecryptedJwt,
   IForgotPasswordRequestBody,
   ILoginRequestBody,
   IRefreshToken,
   IRegisterRequestBody,
   IResetPasswordRequestBody,
-  IUser
+  IUser,
+  IUserWithId
 } from '../types/userTypes'
 import httpError from '../utils/httpError'
 import httpResponse from '../utils/httpResponse'
@@ -58,6 +61,11 @@ interface IForgotPasswordRequest extends Request {
 interface IResetPasswordRequest extends Request {
   params: { token: string }
   body: IResetPasswordRequestBody
+}
+
+interface IChangePasswordRequest extends Request {
+  authenticatedUser: IUserWithId
+  body: IChangePasswordRequestBody
 }
 
 export default {
@@ -250,6 +258,7 @@ export default {
   },
   logout: async (req: Request, res: Response, next: NextFunction) => {
     try {
+       
       const { cookies } = req
       const { refreshToken } = cookies as { refreshToken: string | null }
 
@@ -284,6 +293,7 @@ export default {
   },
   refreshToken: async (req: Request, res: Response, next: NextFunction) => {
     try {
+       
       const { cookies } = req
       const { refreshToken, accessToken } = cookies as { refreshToken: string | null; accessToken: string | null }
 
@@ -411,6 +421,49 @@ export default {
       const to = [user.email]
       const subject = 'Reset password successful'
       const text = `Your account password has been reset successfully`
+
+      emailService.sendMail(to, subject, text).catch((error) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        logger.error('Email service', { meta: error })
+      })
+
+      httpResponse(req, res, 200, responseMessage.SUCCESS)
+    } catch (error) {
+      httpError(next, error, req, 500)
+    }
+  },
+  changePassword: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { body, authenticatedUser } = req as IChangePasswordRequest
+
+      const { error, value } = validateJoiSchema<IChangePasswordRequestBody>(validateChangePasswordBody, body)
+      if (error) {
+        return httpError(next, error, req, 422)
+      }
+
+      const user = await dbService.findUserById(authenticatedUser._id, '+password')
+      if (!user) {
+        return httpError(next, new Error(responseMessage.NOT_FOUND('user')), req, 404)
+      }
+
+      const { oldPassword, newPassword } = value
+
+      if (newPassword === oldPassword) {
+        return httpError(next, new Error(responseMessage.PASSWORD_MATCHING_OLD_PASSWORD), req, 400)
+      }
+
+      const isOldPasswordValid = await quicker.comparePassword(oldPassword, user.password)
+      if (!isOldPasswordValid) {
+        return httpError(next, new Error(responseMessage.INVALID_OLD_PASSWORD), req, 400)
+      }
+
+      const hashedNewPassword = await quicker.hashPassword(newPassword)
+      user.password = hashedNewPassword
+      await user.save()
+
+      const to = [user.email]
+      const subject = 'Password changed'
+      const text = `Your account password has been changed successfully`
 
       emailService.sendMail(to, subject, text).catch((error) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
