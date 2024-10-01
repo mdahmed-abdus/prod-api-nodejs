@@ -298,10 +298,14 @@ export default {
       const { refreshToken, accessToken } = cookies as { refreshToken: string | null; accessToken: string | null }
 
       if (accessToken) {
-        const verifiedAccessToken = quicker.verifyToken(accessToken, config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET as string) as IDecryptedJwt
+        try {
+          const verifiedAccessToken = quicker.verifyToken(accessToken, config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET as string) as IDecryptedJwt
 
-        if (verifiedAccessToken) {
-          return httpResponse(req, res, 304, responseMessage.SUCCESS)
+          if (verifiedAccessToken) {
+            return httpResponse(req, res, 304, responseMessage.SUCCESS)
+          }
+        } catch {
+          return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401)
         }
       }
 
@@ -316,24 +320,28 @@ export default {
 
       const domain = quicker.getDomainFromUrl(config.SERVER_URL as string)
 
-      const { userId, userRole } = quicker.verifyToken(refreshToken, config.REFRESH_TOKEN.REFRESH_TOKEN_SECRET as string) as IDecryptedJwt
+      try {
+        const { userId, userRole } = quicker.verifyToken(refreshToken, config.REFRESH_TOKEN.REFRESH_TOKEN_SECRET as string) as IDecryptedJwt
 
-      const newAccessToken = quicker.generateToken(
-        { userId, userRole },
-        config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET as string,
-        config.ACCESS_TOKEN.EXPIRY
-      )
+        const newAccessToken = quicker.generateToken(
+          { userId, userRole },
+          config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET as string,
+          config.ACCESS_TOKEN.EXPIRY
+        )
 
-      res.cookie('accessToken', newAccessToken, {
-        path: '/api/v1',
-        domain,
-        sameSite: 'strict',
-        maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
-        httpOnly: true,
-        secure: config.ENV === EApplicationEnvironment.PRODUCTION
-      })
+        res.cookie('accessToken', newAccessToken, {
+          path: '/api/v1',
+          domain,
+          sameSite: 'strict',
+          maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
+          httpOnly: true,
+          secure: config.ENV === EApplicationEnvironment.PRODUCTION
+        })
 
-      httpResponse(req, res, 200, responseMessage.SUCCESS)
+        httpResponse(req, res, 200, responseMessage.SUCCESS)
+      } catch {
+        return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401)
+      }
     } catch (error) {
       httpError(next, error, req, 500)
     }
@@ -367,7 +375,7 @@ export default {
 
       const passwordResetUrl = `${config.FRONTEND_URL}/reset-password/${token}`
       const to = [email]
-      const subject = 'Reset your password'
+      const subject = 'Account password reset requested'
       const text = `Please reset your account password by clicking on the link below\nLink will expire within 15 minutes\n\n${passwordResetUrl}`
 
       emailService.sendMail(to, subject, text).catch((error) => {
