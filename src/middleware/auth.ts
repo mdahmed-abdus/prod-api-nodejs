@@ -1,9 +1,8 @@
 import { NextFunction, Request, Response } from 'express'
-import { JwtPayload } from 'jsonwebtoken'
 import config from '../config/config'
 import responseMessage from '../constant/responseMessage'
 import dbService from '../service/dbService'
-import { IUser } from '../types/userTypes'
+import { IDecryptedJwt, IUser } from '../types/userTypes'
 import httpError from '../utils/httpError'
 import quicker from '../utils/quicker'
 
@@ -11,16 +10,10 @@ interface IAuthenticatedRequest extends Request {
   authenticatedUser: IUser
 }
 
-interface IDecryptedJwt extends JwtPayload {
-  userId: string
-  userRole: string
-}
-
 export default async (req: Request, _res: Response, next: NextFunction) => {
   try {
     const request = req as IAuthenticatedRequest
 
-     
     const { cookies } = request
     const { accessToken } = cookies as { accessToken: string | undefined }
 

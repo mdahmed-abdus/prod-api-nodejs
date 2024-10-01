@@ -19,4 +19,6 @@ router.route('/confirmation/:token').put(apiController.confirmation)
 router.route('/login').post(apiController.login)
 router.route('/logout').put(auth, apiController.logout)
 
+router.route('/refresh-token').post(apiController.refreshToken)
+
 export default router

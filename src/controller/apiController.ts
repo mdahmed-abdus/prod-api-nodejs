@@ -8,7 +8,7 @@ import { EUserRole } from '../constant/userConstant'
 import dbService from '../service/dbService'
 import emailService from '../service/emailService'
 import { validateJoiSchema, validateLoginBody, validateRegisterBody } from '../service/validationService'
-import { ILoginRequestBody, IRefreshToken, IRegisterRequestBody, IUser } from '../types/userTypes'
+import { IDecryptedJwt, ILoginRequestBody, IRefreshToken, IRegisterRequestBody, IUser } from '../types/userTypes'
 import httpError from '../utils/httpError'
 import httpResponse from '../utils/httpResponse'
 import logger from '../utils/logger'
@@ -227,7 +227,6 @@ export default {
   },
   logout: async (req: Request, res: Response, next: NextFunction) => {
     try {
-       
       const { cookies } = req
       const { refreshToken } = cookies as { refreshToken: string | null }
 
@@ -254,6 +253,53 @@ export default {
           httpOnly: true,
           secure: config.ENV === EApplicationEnvironment.PRODUCTION
         })
+
+      httpResponse(req, res, 200, responseMessage.SUCCESS)
+    } catch (error) {
+      httpError(next, error, req, 500)
+    }
+  },
+  refreshToken: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+       
+      const { cookies } = req
+      const { refreshToken, accessToken } = cookies as { refreshToken: string | null; accessToken: string | null }
+
+      if (accessToken) {
+        const verifiedAccessToken = quicker.verifyToken(accessToken, config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET as string) as IDecryptedJwt
+
+        if (verifiedAccessToken) {
+          return httpResponse(req, res, 304, responseMessage.SUCCESS)
+        }
+      }
+
+      if (!refreshToken) {
+        return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401)
+      }
+
+      const rft = await dbService.getRefreshToken(refreshToken)
+      if (!rft) {
+        return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401)
+      }
+
+      const domain = quicker.getDomainFromUrl(config.SERVER_URL as string)
+
+      const { userId, userRole } = quicker.verifyToken(refreshToken, config.REFRESH_TOKEN.REFRESH_TOKEN_SECRET as string) as IDecryptedJwt
+
+      const newAccessToken = quicker.generateToken(
+        { userId, userRole },
+        config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET as string,
+        config.ACCESS_TOKEN.EXPIRY
+      )
+
+      res.cookie('accessToken', newAccessToken, {
+        path: '/api/v1',
+        domain,
+        sameSite: 'strict',
+        maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
+        httpOnly: true,
+        secure: config.ENV === EApplicationEnvironment.PRODUCTION
+      })
 
       httpResponse(req, res, 200, responseMessage.SUCCESS)
     } catch (error) {
