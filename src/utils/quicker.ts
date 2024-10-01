@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt'
 import { getTimezonesForCountry } from 'countries-and-timezones'
 import { randomInt } from 'crypto'
+import dayjs from 'dayjs'
 import jwt from 'jsonwebtoken'
 import { parsePhoneNumber } from 'libphonenumber-js'
 import os from 'os'
@@ -63,5 +64,6 @@ export default {
     return randomInt(min, max).toString()
   },
   generateToken: (payload: object, secret: string, expiry: number) => jwt.sign(payload, secret, { expiresIn: expiry }),
-  verifyToken: (token: string, secret: string) => jwt.verify(token, secret)
+  verifyToken: (token: string, secret: string) => jwt.verify(token, secret),
+  generatePasswordResetExpiry: (minutes: number) => dayjs().valueOf() + minutes * 60 * 1000
 }

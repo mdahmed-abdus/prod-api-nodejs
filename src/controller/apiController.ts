@@ -7,8 +7,8 @@ import responseMessage from '../constant/responseMessage'
 import { EUserRole } from '../constant/userConstant'
 import dbService from '../service/dbService'
 import emailService from '../service/emailService'
-import { validateJoiSchema, validateLoginBody, validateRegisterBody } from '../service/validationService'
-import { IDecryptedJwt, ILoginRequestBody, IRefreshToken, IRegisterRequestBody, IUser } from '../types/userTypes'
+import { validateForgotPasswordBody, validateJoiSchema, validateLoginBody, validateRegisterBody } from '../service/validationService'
+import { IDecryptedJwt, IForgotPasswordRequestBody, ILoginRequestBody, IRefreshToken, IRegisterRequestBody, IUser } from '../types/userTypes'
 import httpError from '../utils/httpError'
 import httpResponse from '../utils/httpResponse'
 import logger from '../utils/logger'
@@ -35,6 +35,10 @@ interface ILoginRequest extends Request {
 
 interface ISelfIdentificationRequest extends Request {
   authenticatedUser: IUser
+}
+
+interface IForgotPasswordRequest extends Request {
+  body: IForgotPasswordRequestBody
 }
 
 export default {
@@ -261,7 +265,6 @@ export default {
   },
   refreshToken: async (req: Request, res: Response, next: NextFunction) => {
     try {
-       
       const { cookies } = req
       const { refreshToken, accessToken } = cookies as { refreshToken: string | null; accessToken: string | null }
 
@@ -299,6 +302,48 @@ export default {
         maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
         httpOnly: true,
         secure: config.ENV === EApplicationEnvironment.PRODUCTION
+      })
+
+      httpResponse(req, res, 200, responseMessage.SUCCESS)
+    } catch (error) {
+      httpError(next, error, req, 500)
+    }
+  },
+  forgotPassword: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { body } = req as IForgotPasswordRequest
+
+      const { error, value } = validateJoiSchema<IForgotPasswordRequestBody>(validateForgotPasswordBody, body)
+      if (error) {
+        return httpError(next, error, req, 422)
+      }
+
+      const { email } = value
+
+      const user = await dbService.findUserByEmail(email)
+      if (!user) {
+        return httpError(next, new Error(responseMessage.NOT_FOUND('user')), req, 404)
+      }
+
+      if (!user.accountConfirmation.status) {
+        return httpError(next, new Error(responseMessage.ACCOUNT_CONFIRMATION_REQUIRED), req, 400)
+      }
+
+      const token = quicker.generateRandomId()
+      const expiry = quicker.generatePasswordResetExpiry(10)
+
+      user.passwordReset.token = token
+      user.passwordReset.expiry = expiry
+      await user.save()
+
+      const passwordResetUrl = `${config.FRONTEND_URL}/reset-password/${token}`
+      const to = [email]
+      const subject = 'Reset your password'
+      const text = `Please reset your account password by clicking on the link below\nLink will expire within 15 minutes\n\n${passwordResetUrl}`
+
+      emailService.sendMail(to, subject, text).catch((error) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        logger.error('Email service', { meta: error })
       })
 
       httpResponse(req, res, 200, responseMessage.SUCCESS)

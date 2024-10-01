@@ -48,3 +48,7 @@ export interface IDecryptedJwt extends JwtPayload {
   userId: string
   userRole: string
 }
+
+export interface IForgotPasswordRequestBody {
+  email: string
+}
