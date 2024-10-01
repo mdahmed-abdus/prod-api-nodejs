@@ -8,6 +8,13 @@ import { v4 } from 'uuid'
 import config from '../config/config'
 
 export default {
+  getDomainFromUrl: (url: string) => {
+    try {
+      return new URL(url).hostname
+    } catch (error) {
+      throw error
+    }
+  },
   getSystemHealth: () => ({
     cpuUsage: os.loadavg(),
     totalMemory: `${(os.totalmem() / 1024 / 1024).toFixed(2)} MB`,

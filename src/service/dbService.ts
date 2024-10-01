@@ -18,5 +18,6 @@ export default {
   registerUser: (payload: IUser) => userModel.create(payload),
   findUserByConfirmationTokenAndCode: (token: string, code: string) =>
     userModel.findOne({ 'accountConfirmation.token': token, 'accountConfirmation.code': code }),
-  createRefreshToken: (payload: IRefreshToken) => refreshModelToken.create(payload)
+  createRefreshToken: (payload: IRefreshToken) => refreshModelToken.create(payload),
+  deleteRefreshToken: (token: string) => refreshModelToken.deleteOne({ token })
 }

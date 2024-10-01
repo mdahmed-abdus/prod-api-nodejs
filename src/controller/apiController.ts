@@ -200,13 +200,7 @@ export default {
       user.lastLoginAt = dayjs().utc().toDate()
       await user.save()
 
-      let domain = ''
-      try {
-        const url = new URL(config.SERVER_URL as string)
-        domain = url.hostname
-      } catch (error) {
-        throw error
-      }
+      const domain = quicker.getDomainFromUrl(config.SERVER_URL as string)
 
       res
         .cookie('accessToken', accessToken, {
@@ -227,6 +221,41 @@ export default {
         })
 
       httpResponse(req, res, 200, responseMessage.SUCCESS, { accessToken, refreshToken })
+    } catch (error) {
+      httpError(next, error, req, 500)
+    }
+  },
+  logout: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+       
+      const { cookies } = req
+      const { refreshToken } = cookies as { refreshToken: string | null }
+
+      if (refreshToken) {
+        await dbService.deleteRefreshToken(refreshToken)
+      }
+
+      const domain = quicker.getDomainFromUrl(config.SERVER_URL as string)
+
+      res
+        .clearCookie('accessToken', {
+          path: '/api/v1',
+          domain,
+          sameSite: 'strict',
+          maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
+          httpOnly: true,
+          secure: config.ENV === EApplicationEnvironment.PRODUCTION
+        })
+        .clearCookie('refreshToken', {
+          path: '/api/v1',
+          domain,
+          sameSite: 'strict',
+          maxAge: 1000 * config.REFRESH_TOKEN.EXPIRY,
+          httpOnly: true,
+          secure: config.ENV === EApplicationEnvironment.PRODUCTION
+        })
+
+      httpResponse(req, res, 200, responseMessage.SUCCESS)
     } catch (error) {
       httpError(next, error, req, 500)
     }
