@@ -13,6 +13,7 @@ export default {
       throw error
     }
   },
+  findUserById: (id: string) => userModel.findById(id),
   findUserByEmail: (email: string, select: string = '') => userModel.findOne({ email }).select(select),
   registerUser: (payload: IUser) => userModel.create(payload),
   findUserByConfirmationTokenAndCode: (token: string, code: string) =>

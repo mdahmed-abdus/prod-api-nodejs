@@ -55,5 +55,6 @@ export default {
     const max = Math.pow(10, length) - 1
     return randomInt(min, max).toString()
   },
-  generateToken: (payload: object, secret: string, expiry: number) => jwt.sign(payload, secret, { expiresIn: expiry })
+  generateToken: (payload: object, secret: string, expiry: number) => jwt.sign(payload, secret, { expiresIn: expiry }),
+  verifyToken: (token: string, secret: string) => jwt.verify(token, secret)
 }

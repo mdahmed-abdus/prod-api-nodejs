@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express, { Application, NextFunction, Request, Response } from 'express'
 import helmet from 'helmet'
@@ -12,6 +13,8 @@ const app: Application = express()
 
 // Middleware
 app.use(helmet())
+ 
+app.use(cookieParser())
 app.use(cors({ methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'], origin: [config.CLIENT_URL as string], credentials: true }))
 app.use(express.json())
 app.use(express.static(path.join(__dirname, '../', 'public')))

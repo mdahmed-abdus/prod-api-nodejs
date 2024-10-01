@@ -7,5 +7,6 @@ export default {
   ALREADY_EXISTS: (entity: string, identifier: string) => `${entity} already exists with ${identifier}`,
   INVALID_CONFIRMATION_TOKEN_OR_CODE: 'Invalid confirmation token or code',
   ACCOUNT_ALREADY_CONFIRMED: 'Account already confirmed',
-  INVALID_EMAIL_OR_PASSWORD: 'Invalid email or password'
+  INVALID_EMAIL_OR_PASSWORD: 'Invalid email or password',
+  UNAUTHORIZED: 'You are not authorized to perform this action'
 }
