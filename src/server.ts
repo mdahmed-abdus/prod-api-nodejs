@@ -1,4 +1,3 @@
-import { error } from 'console'
 import { connection } from 'mongoose'
 import app from './app'
 import config from './config'
@@ -12,16 +11,20 @@ const server = app.listen(config.PORT)
 ;(async () => {
   try {
     const conn = await dbService.connect()
-    logger.info('Database connection', { meta: { connectionName: conn.name } })
+    logger.info('Database connected.', { meta: { connectionName: conn.name } })
 
     initRateLimiter(connection)
-    logger.info('Rate limiter initiated')
+    logger.info('Rate limiter initiated.')
 
-    logger.info('Server is running...', {
-      meta: { PORT: config.APP_PORT, SERVER_URL: config.APP_URL }
+    logger.info('Server started.', {
+      meta: {
+        ENV: config.ENV,
+        PORT: config.APP_PORT,
+        APP_URL: config.APP_URL
+      }
     })
-  } catch {
-    logger.error('Server error. Server is not running.', { meta: error })
+  } catch (error) {
+    logger.error('Server error. Server stopped.', { meta: error })
     server.close((error) => {
       if (error) {
         logger.error('Server error. Server could not be closed.', {

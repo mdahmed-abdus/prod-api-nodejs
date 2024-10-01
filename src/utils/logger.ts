@@ -1,4 +1,4 @@
-import { blue, green, magenta, red, yellow } from 'colorette'
+import { blue, dim, green, magenta, red, yellow } from 'colorette'
 import path from 'path'
 import * as sourceMapSupport from 'source-map-support'
 import util from 'util'
@@ -40,7 +40,7 @@ const consoleLogFormat = format.printf((info) => {
     colors: true
   })
 
-  return `${customLevel} [${customTimeStamp}] ${customMessage}\n${magenta(
+  return `${customLevel} ${customMessage} ${dim(customTimeStamp)}\n${magenta(
     'META'
   )} ${customMeta}\n`
 })
