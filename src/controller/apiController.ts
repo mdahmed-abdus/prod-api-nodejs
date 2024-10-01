@@ -2,12 +2,13 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { NextFunction, Request, Response } from 'express'
 import config from '../config/config'
+import { EApplicationEnvironment } from '../constant/application'
 import responseMessage from '../constant/responseMessage'
 import { EUserRole } from '../constant/userConstant'
 import dbService from '../service/dbService'
 import emailService from '../service/emailService'
-import { validateJoiSchema, validateRegisterBody } from '../service/validationService'
-import { IRegisterRequestBody, IUser } from '../types/userTypes'
+import { validateJoiSchema, validateLoginBody, validateRegisterBody } from '../service/validationService'
+import { ILoginRequestBody, IRefreshToken, IRegisterRequestBody, IUser } from '../types/userTypes'
 import httpError from '../utils/httpError'
 import httpResponse from '../utils/httpResponse'
 import logger from '../utils/logger'
@@ -26,6 +27,10 @@ interface IConfirmRequest extends Request {
   query: {
     code: string
   }
+}
+
+interface ILoginRequest extends Request {
+  body: ILoginRequestBody
 }
 
 export default {
@@ -139,6 +144,77 @@ export default {
       })
 
       httpResponse(req, res, 200, responseMessage.SUCCESS)
+    } catch (error) {
+      httpError(next, error, req, 500)
+    }
+  },
+  login: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { body } = req as ILoginRequest
+
+      const { value, error } = validateJoiSchema<ILoginRequestBody>(validateLoginBody, body)
+      if (error) {
+        return httpError(next, error, req, 422)
+      }
+
+      const { email, password } = value
+
+      const user = await dbService.findUserByEmail(email, '+password')
+      if (!user) {
+        return httpError(next, new Error(responseMessage.NOT_FOUND('user')), req, 404)
+      }
+
+      const isValidPassword = await quicker.comparePassword(password, user.password)
+      if (!isValidPassword) {
+        return httpError(next, new Error(responseMessage.INVALID_EMAIL_OR_PASSWORD), req, 400)
+      }
+
+      const accessToken = quicker.generateToken(
+        { userId: user._id, userRole: user.role },
+        config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET as string,
+        config.ACCESS_TOKEN.EXPIRY
+      )
+
+      const refreshToken = quicker.generateToken(
+        { userId: user._id, userRole: user.role },
+        config.REFRESH_TOKEN.REFRESH_TOKEN_SECRET as string,
+        config.REFRESH_TOKEN.EXPIRY
+      )
+
+      const refreshTokenPayload: IRefreshToken = { token: refreshToken }
+
+      await dbService.createRefreshToken(refreshTokenPayload)
+
+      user.lastLoginAt = dayjs().utc().toDate()
+      await user.save()
+
+      let domain = ''
+      try {
+        const url = new URL(config.SERVER_URL as string)
+        domain = url.hostname
+      } catch (error) {
+        throw error
+      }
+
+      res
+        .cookie('accessToken', accessToken, {
+          path: '/api/v1',
+          domain,
+          sameSite: 'strict',
+          maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
+          httpOnly: true,
+          secure: config.ENV === EApplicationEnvironment.PRODUCTION
+        })
+        .cookie('refreshToken', refreshToken, {
+          path: '/api/v1',
+          domain,
+          sameSite: 'strict',
+          maxAge: 1000 * config.REFRESH_TOKEN.EXPIRY,
+          httpOnly: true,
+          secure: config.ENV === EApplicationEnvironment.PRODUCTION
+        })
+
+      httpResponse(req, res, 200, responseMessage.SUCCESS, { accessToken, refreshToken })
     } catch (error) {
       httpError(next, error, req, 500)
     }

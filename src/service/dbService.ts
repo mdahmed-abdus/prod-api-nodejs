@@ -1,7 +1,8 @@
 import mongoose from 'mongoose'
 import config from '../config/config'
+import refreshModelToken from '../model/refreshModelToken'
 import userModel from '../model/userModel'
-import { IUser } from '../types/userTypes'
+import { IRefreshToken, IUser } from '../types/userTypes'
 
 export default {
   connect: async () => {
@@ -12,8 +13,9 @@ export default {
       throw error
     }
   },
-  findUserByEmail: (email: string) => userModel.findOne({ email }),
+  findUserByEmail: (email: string, select: string = '') => userModel.findOne({ email }).select(select),
   registerUser: (payload: IUser) => userModel.create(payload),
   findUserByConfirmationTokenAndCode: (token: string, code: string) =>
-    userModel.findOne({ 'accountConfirmation.token': token, 'accountConfirmation.code': code })
+    userModel.findOne({ 'accountConfirmation.token': token, 'accountConfirmation.code': code }),
+  createRefreshToken: (payload: IRefreshToken) => refreshModelToken.create(payload)
 }

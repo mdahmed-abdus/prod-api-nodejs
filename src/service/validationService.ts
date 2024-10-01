@@ -1,5 +1,5 @@
 import joi from 'joi'
-import { IRegisterRequestBody } from '../types/userTypes'
+import { ILoginRequestBody, IRegisterRequestBody } from '../types/userTypes'
 
 export const validateRegisterBody = joi.object<IRegisterRequestBody>({
   name: joi.string().trim().min(3).max(72).required(),
@@ -7,6 +7,11 @@ export const validateRegisterBody = joi.object<IRegisterRequestBody>({
   phoneNumber: joi.string().min(4).max(20).required(),
   password: joi.string().trim().min(3).max(24).required(),
   consent: joi.boolean().valid(true).required()
+})
+
+export const validateLoginBody = joi.object<ILoginRequestBody>({
+  email: joi.string().email().required(),
+  password: joi.string().trim().min(3).max(24).required()
 })
 
 export const validateJoiSchema = <T>(schema: joi.Schema, value: unknown) => {
