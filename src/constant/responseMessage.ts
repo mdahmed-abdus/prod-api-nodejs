@@ -9,5 +9,7 @@ export default {
   ACCOUNT_ALREADY_CONFIRMED: 'Account already confirmed',
   INVALID_EMAIL_OR_PASSWORD: 'Invalid email or password',
   UNAUTHORIZED: 'You are not authorized to perform this action',
-  ACCOUNT_CONFIRMATION_REQUIRED: 'Account confirmation required'
+  ACCOUNT_CONFIRMATION_REQUIRED: 'Account confirmation required',
+  EXPIRED_URL: 'URL link has expired',
+  INVALID_REQUEST: 'Invalid request'
 }

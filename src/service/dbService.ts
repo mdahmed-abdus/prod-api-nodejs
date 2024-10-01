@@ -20,5 +20,6 @@ export default {
     userModel.findOne({ 'accountConfirmation.token': token, 'accountConfirmation.code': code }),
   createRefreshToken: (payload: IRefreshToken) => refreshModelToken.create(payload),
   deleteRefreshToken: (token: string) => refreshModelToken.deleteOne({ token }),
-  getRefreshToken: (token: string) => refreshModelToken.find({ token })
+  getRefreshToken: (token: string) => refreshModelToken.find({ token }),
+  findUserByResetToken: (token: string) => userModel.findOne({ 'passwordReset.token': token })
 }

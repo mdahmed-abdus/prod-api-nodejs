@@ -7,8 +7,22 @@ import responseMessage from '../constant/responseMessage'
 import { EUserRole } from '../constant/userConstant'
 import dbService from '../service/dbService'
 import emailService from '../service/emailService'
-import { validateForgotPasswordBody, validateJoiSchema, validateLoginBody, validateRegisterBody } from '../service/validationService'
-import { IDecryptedJwt, IForgotPasswordRequestBody, ILoginRequestBody, IRefreshToken, IRegisterRequestBody, IUser } from '../types/userTypes'
+import {
+  validateForgotPasswordBody,
+  validateJoiSchema,
+  validateLoginBody,
+  validateRegisterBody,
+  validateResetPasswordBody
+} from '../service/validationService'
+import {
+  IDecryptedJwt,
+  IForgotPasswordRequestBody,
+  ILoginRequestBody,
+  IRefreshToken,
+  IRegisterRequestBody,
+  IResetPasswordRequestBody,
+  IUser
+} from '../types/userTypes'
 import httpError from '../utils/httpError'
 import httpResponse from '../utils/httpResponse'
 import logger from '../utils/logger'
@@ -39,6 +53,11 @@ interface ISelfIdentificationRequest extends Request {
 
 interface IForgotPasswordRequest extends Request {
   body: IForgotPasswordRequestBody
+}
+
+interface IResetPasswordRequest extends Request {
+  params: { token: string }
+  body: IResetPasswordRequestBody
 }
 
 export default {
@@ -340,6 +359,58 @@ export default {
       const to = [email]
       const subject = 'Reset your password'
       const text = `Please reset your account password by clicking on the link below\nLink will expire within 15 minutes\n\n${passwordResetUrl}`
+
+      emailService.sendMail(to, subject, text).catch((error) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        logger.error('Email service', { meta: error })
+      })
+
+      httpResponse(req, res, 200, responseMessage.SUCCESS)
+    } catch (error) {
+      httpError(next, error, req, 500)
+    }
+  },
+  resetPassword: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { body, params } = req as IResetPasswordRequest
+      const { error, value } = validateJoiSchema<IResetPasswordRequestBody>(validateResetPasswordBody, body)
+      if (error) {
+        return httpError(next, error, req, 422)
+      }
+
+      const { token } = params
+      const user = await dbService.findUserByResetToken(token)
+      if (!user) {
+        return httpError(next, new Error(responseMessage.NOT_FOUND('user')), req, 404)
+      }
+
+      if (!user.accountConfirmation.status) {
+        return httpError(next, new Error(responseMessage.ACCOUNT_CONFIRMATION_REQUIRED), req, 400)
+      }
+
+      const storedExpiry = user.passwordReset.expiry
+      const currentTimestamp = dayjs().valueOf()
+
+      if (!storedExpiry) {
+        return httpError(next, new Error(responseMessage.INVALID_REQUEST), req, 400)
+      }
+
+      if (currentTimestamp > storedExpiry) {
+        return httpError(next, new Error(responseMessage.EXPIRED_URL), req, 400)
+      }
+
+      const { newPassword } = value
+      const hashedPassword = await quicker.hashPassword(newPassword)
+
+      user.password = hashedPassword
+      user.passwordReset.token = null
+      user.passwordReset.expiry = null
+      user.passwordReset.lastResetAt = dayjs().utc().toDate()
+      await user.save()
+
+      const to = [user.email]
+      const subject = 'Reset password successful'
+      const text = `Your account password has been reset successfully`
 
       emailService.sendMail(to, subject, text).catch((error) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
