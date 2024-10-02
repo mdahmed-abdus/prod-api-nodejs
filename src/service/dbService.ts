@@ -6,12 +6,7 @@ import { IRefreshToken, IUser } from '../types/userTypes'
 
 export default {
   connect: async () => {
-    try {
-      await mongoose.connect(config.DATABASE_URL)
-      return mongoose.connection
-    } catch (error) {
-      throw error
-    }
+    await mongoose.connect(config.DATABASE_URL)
   },
   findUserById: (id: string, select: string = '') =>
     userModel.findById(id).select(select),

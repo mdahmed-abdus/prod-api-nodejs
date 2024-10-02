@@ -1,37 +1,12 @@
-import cookieParser from 'cookie-parser'
-import cors from 'cors'
-import express, { Application, NextFunction, Request, Response } from 'express'
-import helmet from 'helmet'
-import path from 'path'
-import config from './config'
-import responseMessage from './constant/responseMessage'
-import globalErrorHandler from './middleware/globalErrorHandler'
-import router from './router/apiRouter'
-import httpError from './utils/httpError'
+import express from 'express'
+import appError from './errors/appError'
+import appMiddleware from './middleware/appMiddleware'
+import appRoute from './router/appRoute'
 
-const app: Application = express()
+const app = express()
 
-// Middleware
-app.use(helmet())
-
-app.use(cookieParser())
-app.use(cors(config.CORS_OPTIONS))
-app.use(express.json())
-app.use(express.static(path.join(__dirname, '../', 'public')))
-
-// Routes
-app.use('/api/v1', router)
-
-// 404 handler
-app.use((req: Request, _res: Response, next: NextFunction) => {
-  try {
-    throw new Error(responseMessage.NOT_FOUND('route'))
-  } catch (error) {
-    httpError(next, error, req, 404)
-  }
-})
-
-// Error
-app.use(globalErrorHandler)
+appMiddleware(app)
+appRoute(app)
+appError(app)
 
 export default app

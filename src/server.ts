@@ -5,24 +5,26 @@ import { initRateLimiter } from './config/rateLimiter'
 import dbService from './service/dbService'
 import logger from './utils/logger'
 
-const server = app.listen(config.PORT)
+const server = app.listen(config.PORT, () => {
+  logger.info('Server started.', {
+    meta: {
+      ENV: config.ENV,
+      PORT: config.APP_PORT,
+      APP_URL: config.APP_URL
+    }
+  })
+})
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 ;(async () => {
   try {
-    const conn = await dbService.connect()
-    logger.info('Database connected.', { meta: { connectionName: conn.name } })
+    await dbService.connect()
+    logger.info('Database connected.', {
+      meta: { connectionName: connection.name }
+    })
 
     initRateLimiter(connection)
     logger.info('Rate limiter initiated.')
-
-    logger.info('Server started.', {
-      meta: {
-        ENV: config.ENV,
-        PORT: config.APP_PORT,
-        APP_URL: config.APP_URL
-      }
-    })
   } catch (error) {
     logger.error('Server error. Server stopped.', { meta: error })
     server.close((error) => {
