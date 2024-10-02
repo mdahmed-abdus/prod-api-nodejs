@@ -1,9 +1,10 @@
 import { Application } from 'express'
 import notFoundHandler from '../errors/notFoundHandler'
-import router from '../router/apiRouter'
+import apiRouterV1 from './v1/apiRouter'
 
 export default (app: Application) => {
-  app.use('/api/v1', router)
+  // base_url/api/v1/...
+  app.use('/api/v1', apiRouterV1)
 
   app.use(notFoundHandler)
 }
