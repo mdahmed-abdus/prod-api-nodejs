@@ -7,7 +7,6 @@ import { parsePhoneNumber } from 'libphonenumber-js'
 import os from 'os'
 import { v4 } from 'uuid'
 import config from '../config'
-import { BCRYPT_SALT_ROUNDS } from '../config/bcrypt'
 
 export default {
   getDomainFromUrl: (url: string) => {
@@ -60,7 +59,8 @@ export default {
     }
   },
   countryTimezone: (isoCode: string) => getTimezonesForCountry(isoCode),
-  hashPassword: (password: string) => bcrypt.hash(password, BCRYPT_SALT_ROUNDS),
+  hashPassword: (password: string) =>
+    bcrypt.hash(password, config.HASH_SALT_ROUNDS),
   comparePassword: (password: string, hashedPassword: string) =>
     bcrypt.compare(password, hashedPassword),
   generateRandomId: v4,
