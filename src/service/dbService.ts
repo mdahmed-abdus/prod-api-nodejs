@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
 import config from '../config'
-import refreshModelToken from '../model/refreshModelToken'
+import refreshTokenModel from '../model/refreshTokenModel'
 import userModel from '../model/userModel'
 import { IRefreshToken, IUser } from '../types/userTypes'
 
@@ -19,9 +19,9 @@ export default {
       'accountConfirmation.code': code
     }),
   createRefreshToken: (payload: IRefreshToken) =>
-    refreshModelToken.create(payload),
-  deleteRefreshToken: (token: string) => refreshModelToken.deleteOne({ token }),
-  getRefreshToken: (token: string) => refreshModelToken.find({ token }),
+    refreshTokenModel.create(payload),
+  deleteRefreshToken: (token: string) => refreshTokenModel.deleteOne({ token }),
+  getRefreshToken: (token: string) => refreshTokenModel.find({ token }),
   findUserByResetToken: (token: string) =>
     userModel.findOne({ 'passwordReset.token': token })
 }
