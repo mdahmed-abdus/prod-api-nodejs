@@ -13,6 +13,13 @@ import config from '../config'
 
 sourceMapSupport.install()
 
+type TInfo = {
+  level: string
+  message: string
+  timestamp: string
+  meta?: { [key: string]: unknown }
+}
+
 const colorizeLevel = (level: string) => {
   switch (level) {
     case 'ERROR':
@@ -27,12 +34,10 @@ const colorizeLevel = (level: string) => {
 }
 
 const consoleLogFormat = format.printf((info) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { level, message, timestamp, meta = {} } = info
+  const { level, message, timestamp, meta = {} } = info as TInfo
 
   const customLevel = colorizeLevel(level.toUpperCase())
-  const customTimeStamp = green(timestamp as string)
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const customTimeStamp = green(timestamp)
   const customMessage = message
   const customMeta = util.inspect(meta, {
     showHidden: false,
@@ -40,18 +45,21 @@ const consoleLogFormat = format.printf((info) => {
     colors: true
   })
 
-  return `${customLevel} ${customMessage} ${dim(customTimeStamp)}\n${magenta(
-    'META'
-  )} ${customMeta}\n`
+  let logMsg = `\n${customLevel} ${customMessage}\n${dim('TIME')} ${dim(
+    customTimeStamp
+  )}`
+  if (Object.keys(meta).length !== 0) {
+    logMsg = `${logMsg}\n${magenta('META')} ${customMeta}`
+  }
+
+  return logMsg
 })
 
 const fileLogFormat = format.printf((info) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { level, message, timestamp, meta = {} } = info
+  const { level, message, timestamp, meta = {} } = info as TInfo
 
   const logMeta: Record<string, unknown> = {}
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   for (const [key, value] of Object.entries(meta)) {
     if (value instanceof Error) {
       logMeta[key] = {
@@ -66,9 +74,7 @@ const fileLogFormat = format.printf((info) => {
 
   const logData = {
     level: level.toUpperCase(),
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     message,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     timestamp,
     meta: logMeta
   }
