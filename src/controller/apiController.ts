@@ -4,6 +4,7 @@ import { NextFunction, Request, Response } from 'express'
 import config from '../config'
 import responseMessage from '../constant/responseMessage'
 import { EUserRole } from '../constant/userConstant'
+import crypto from '../service/crypto'
 import dbService from '../service/dbService'
 import emailService from '../service/emailService'
 import {
@@ -140,7 +141,7 @@ export default {
         )
       }
 
-      const hashedPassword = await quicker.hashPassword(password)
+      const hashedPassword = await crypto.hashPassword(password)
 
       const token = quicker.generateRandomId()
       const code = quicker.generateOtp(6)
@@ -246,7 +247,7 @@ export default {
         )
       }
 
-      const isValidPassword = await quicker.comparePassword(
+      const isValidPassword = await crypto.comparePassword(
         password,
         user.password
       )
@@ -526,7 +527,7 @@ export default {
       }
 
       const { newPassword } = value
-      const hashedPassword = await quicker.hashPassword(newPassword)
+      const hashedPassword = await crypto.hashPassword(newPassword)
 
       user.password = hashedPassword
       user.passwordReset.token = null
@@ -584,7 +585,7 @@ export default {
         )
       }
 
-      const isOldPasswordValid = await quicker.comparePassword(
+      const isOldPasswordValid = await crypto.comparePassword(
         oldPassword,
         user.password
       )
@@ -597,7 +598,7 @@ export default {
         )
       }
 
-      const hashedNewPassword = await quicker.hashPassword(newPassword)
+      const hashedNewPassword = await crypto.hashPassword(newPassword)
       user.password = hashedNewPassword
       await user.save()
 

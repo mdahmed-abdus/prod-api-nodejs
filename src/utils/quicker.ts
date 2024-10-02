@@ -1,4 +1,3 @@
-import bcrypt from 'bcrypt'
 import { getTimezonesForCountry } from 'countries-and-timezones'
 import { randomInt } from 'crypto'
 import dayjs from 'dayjs'
@@ -59,10 +58,6 @@ export default {
     }
   },
   countryTimezone: (isoCode: string) => getTimezonesForCountry(isoCode),
-  hashPassword: (password: string) =>
-    bcrypt.hash(password, config.HASH_SALT_ROUNDS),
-  comparePassword: (password: string, hashedPassword: string) =>
-    bcrypt.compare(password, hashedPassword),
   generateRandomId: v4,
   generateOtp: (length: number) => {
     const min = Math.pow(10, length - 1)
