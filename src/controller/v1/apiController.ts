@@ -1,13 +1,9 @@
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
 import { Request, Response } from 'express'
 import responseMessage from '../../constant/responseMessage'
 import catchAsyncError from '../../error/catchAsyncError'
 import { IUser } from '../../types/userTypes'
 import utils from '../../utils'
 import httpResponse from '../../utils/httpResponse'
-
-dayjs.extend(utc)
 
 interface IIdentifyRequest extends Request {
   authenticatedUser: IUser

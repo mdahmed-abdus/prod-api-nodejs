@@ -1,10 +1,10 @@
 import { getTimezonesForCountry } from 'countries-and-timezones'
 import { randomInt } from 'crypto'
-import dayjs from 'dayjs'
 import { parsePhoneNumber } from 'libphonenumber-js'
 import os from 'os'
 import { v4 } from 'uuid'
 import config from '../config'
+import dateTime from './dateTime'
 
 export default {
   getSystemHealth: () => ({
@@ -63,5 +63,5 @@ export default {
   },
 
   generatePasswordResetExpiry: (minutes: number) =>
-    dayjs().valueOf() + minutes * 60 * 1000
+    dateTime.currentTimestamp() + minutes * 60 * 1000
 }

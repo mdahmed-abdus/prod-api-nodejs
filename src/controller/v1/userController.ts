@@ -1,5 +1,3 @@
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
 import { NextFunction, Request, Response } from 'express'
 import config from '../../config'
 import responseMessage from '../../constant/responseMessage'
@@ -22,11 +20,10 @@ import {
   IUser
 } from '../../types/userTypes'
 import utils from '../../utils'
+import dateTime from '../../utils/dateTime'
 import httpError from '../../utils/httpError'
 import httpResponse from '../../utils/httpResponse'
 import logger from '../../utils/logger'
-
-dayjs.extend(utc)
 
 interface IRegisterRequest extends Request {
   body: IRegisterRequestBody
@@ -177,7 +174,7 @@ export const login = catchAsyncError(
 
     await refreshTokenDao.createRefreshToken(refreshTokenPayload)
 
-    user.lastLoginAt = dayjs().utc().toDate()
+    user.lastLoginAt = dateTime.currentDate()
     await user.save()
 
     const domain = config.APP_HOSTNAME
@@ -264,7 +261,7 @@ export const confirmation = catchAsyncError(
     }
 
     user.accountConfirmation.status = true
-    user.accountConfirmation.timestamp = dayjs().utc().toDate()
+    user.accountConfirmation.timestamp = dateTime.currentDate()
 
     await user.save()
 

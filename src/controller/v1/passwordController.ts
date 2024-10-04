@@ -1,5 +1,3 @@
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
 import { NextFunction, Request, Response } from 'express'
 import config from '../../config'
 import responseMessage from '../../constant/responseMessage'
@@ -20,11 +18,10 @@ import {
 } from '../../types/passwordTypes'
 import { IUserWithId } from '../../types/userTypes'
 import utils from '../../utils'
+import dateTime from '../../utils/dateTime'
 import httpError from '../../utils/httpError'
 import httpResponse from '../../utils/httpResponse'
 import logger from '../../utils/logger'
-
-dayjs.extend(utc)
 
 interface IForgotPasswordRequest extends Request {
   body: IForgotPasswordRequestBody
@@ -126,7 +123,7 @@ export const resetPassword = catchAsyncError(
     }
 
     const storedExpiry = user.passwordReset.expiry
-    const currentTimestamp = dayjs().valueOf()
+    const currentTimestamp = dateTime.currentTimestamp()
 
     if (!storedExpiry) {
       return httpError(
@@ -147,7 +144,7 @@ export const resetPassword = catchAsyncError(
     user.password = hashedPassword
     user.passwordReset.token = null
     user.passwordReset.expiry = null
-    user.passwordReset.lastResetAt = dayjs().utc().toDate()
+    user.passwordReset.lastResetAt = dateTime.currentDate()
     await user.save()
 
     const to = [user.email]
