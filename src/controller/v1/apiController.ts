@@ -4,8 +4,8 @@ import { Request, Response } from 'express'
 import responseMessage from '../../constant/responseMessage'
 import catchAsyncError from '../../errors/catchAsyncError'
 import { IUser } from '../../types/userTypes'
+import utils from '../../utils'
 import httpResponse from '../../utils/httpResponse'
-import quicker from '../../utils/quicker'
 
 dayjs.extend(utc)
 
@@ -24,8 +24,8 @@ export const identify = catchAsyncError((req: Request, res: Response) => {
 
 export const health = catchAsyncError((req: Request, res: Response) => {
   const healthData = {
-    application: quicker.getApplicationHealth(),
-    system: quicker.getSystemHealth(),
+    application: utils.getApplicationHealth(),
+    system: utils.getSystemHealth(),
     timeStamp: Date.now()
   }
   httpResponse(req, res, 200, responseMessage.SUCCESS, healthData)

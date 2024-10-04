@@ -22,10 +22,10 @@ import {
   IRegisterRequestBody,
   IUser
 } from '../../types/userTypes'
+import utils from '../../utils'
 import httpError from '../../utils/httpError'
 import httpResponse from '../../utils/httpResponse'
 import logger from '../../utils/logger'
-import quicker from '../../utils/quicker'
 
 dayjs.extend(utc)
 
@@ -60,7 +60,7 @@ export const register = catchAsyncError(
 
     const { name, phoneNumber, email, password, consent } = value
     const { countryCode, internationalNumber, isoCode } =
-      quicker.parsePhoneNumber('+' + phoneNumber)
+      utils.parsePhoneNumber('+' + phoneNumber)
 
     if (!countryCode || !internationalNumber || !isoCode) {
       return httpError(
@@ -71,7 +71,7 @@ export const register = catchAsyncError(
       )
     }
 
-    const timezone = quicker.countryTimezone(isoCode)
+    const timezone = utils.countryTimezone(isoCode)
     if (!timezone || timezone.length === 0) {
       return httpError(
         next,
@@ -93,8 +93,8 @@ export const register = catchAsyncError(
 
     const hashedPassword = await cryptoService.hashPassword(password)
 
-    const token = quicker.generateRandomId()
-    const code = quicker.generateOtp(6)
+    const token = utils.generateRandomId()
+    const code = utils.generateOtp(6)
 
     const payload: IUser = {
       name,

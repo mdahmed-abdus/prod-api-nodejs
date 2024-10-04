@@ -19,10 +19,10 @@ import {
   IResetPasswordRequestBody,
   IUserWithId
 } from '../../types/userTypes'
+import utils from '../../utils'
 import httpError from '../../utils/httpError'
 import httpResponse from '../../utils/httpResponse'
 import logger from '../../utils/logger'
-import quicker from '../../utils/quicker'
 
 dayjs.extend(utc)
 
@@ -73,8 +73,8 @@ export const forgotPassword = catchAsyncError(
       )
     }
 
-    const token = quicker.generateRandomId()
-    const expiry = quicker.generatePasswordResetExpiry(10)
+    const token = utils.generateRandomId()
+    const expiry = utils.generatePasswordResetExpiry(10)
 
     user.passwordReset.token = token
     user.passwordReset.expiry = expiry
