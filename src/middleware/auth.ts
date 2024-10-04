@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import config from '../config'
 import responseMessage from '../constant/responseMessage'
-import dbService from '../service/dbService'
+import userDao from '../dataAccess/userDao'
 import { IDecryptedJwt, IUser } from '../types/userTypes'
 import httpError from '../utils/httpError'
 import quicker from '../utils/quicker'
@@ -31,7 +31,7 @@ export default async (req: Request, _res: Response, next: NextFunction) => {
       config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET
     ) as IDecryptedJwt
 
-    const user = await dbService.findUserById(userId)
+    const user = await userDao.findUserById(userId)
     if (!user) {
       return httpError(
         next,
