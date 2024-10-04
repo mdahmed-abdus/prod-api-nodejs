@@ -9,6 +9,7 @@ import userDao from '../../dataAccess/userDao'
 import catchAsyncError from '../../errors/catchAsyncError'
 import cryptoService from '../../service/cryptoService'
 import emailService from '../../service/emailService'
+import tokenService from '../../service/tokenService'
 import {
   validateJoiSchema,
   validateLoginBody,
@@ -161,13 +162,13 @@ export const login = catchAsyncError(
       )
     }
 
-    const accessToken = quicker.generateToken(
+    const accessToken = tokenService.generateToken(
       { userId: user._id, userRole: user.role },
       config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET,
       config.ACCESS_TOKEN.EXPIRY
     )
 
-    const refreshToken = quicker.generateToken(
+    const refreshToken = tokenService.generateToken(
       { userId: user._id, userRole: user.role },
       config.REFRESH_TOKEN.REFRESH_TOKEN_SECRET,
       config.REFRESH_TOKEN.EXPIRY
@@ -180,7 +181,7 @@ export const login = catchAsyncError(
     user.lastLoginAt = dayjs().utc().toDate()
     await user.save()
 
-    const domain = quicker.getDomainFromUrl(config.APP_URL)
+    const domain = config.APP_HOSTNAME
 
     res
       .cookie('accessToken', accessToken, {
@@ -215,7 +216,7 @@ export const logout = catchAsyncError(async (req: Request, res: Response) => {
     await refreshTokenDao.deleteRefreshToken(refreshToken)
   }
 
-  const domain = quicker.getDomainFromUrl(config.APP_URL)
+  const domain = config.APP_HOSTNAME
 
   res
     .clearCookie('accessToken', {
@@ -291,7 +292,7 @@ export const refreshToken = catchAsyncError(
 
     if (accessToken) {
       try {
-        const verifiedAccessToken = quicker.verifyToken(
+        const verifiedAccessToken = tokenService.verifyToken(
           accessToken,
           config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET
         ) as IDecryptedJwt
@@ -318,15 +319,15 @@ export const refreshToken = catchAsyncError(
       return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401)
     }
 
-    const domain = quicker.getDomainFromUrl(config.APP_URL)
+    const domain = config.APP_HOSTNAME
 
     try {
-      const { userId, userRole } = quicker.verifyToken(
+      const { userId, userRole } = tokenService.verifyToken(
         refreshToken,
         config.REFRESH_TOKEN.REFRESH_TOKEN_SECRET
       ) as IDecryptedJwt
 
-      const newAccessToken = quicker.generateToken(
+      const newAccessToken = tokenService.generateToken(
         { userId, userRole },
         config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET,
         config.ACCESS_TOKEN.EXPIRY

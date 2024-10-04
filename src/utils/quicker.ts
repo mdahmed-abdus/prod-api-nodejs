@@ -1,25 +1,18 @@
 import { getTimezonesForCountry } from 'countries-and-timezones'
 import { randomInt } from 'crypto'
 import dayjs from 'dayjs'
-import jwt from 'jsonwebtoken'
 import { parsePhoneNumber } from 'libphonenumber-js'
 import os from 'os'
 import { v4 } from 'uuid'
 import config from '../config'
 
 export default {
-  getDomainFromUrl: (url: string) => {
-    try {
-      return new URL(url).hostname
-    } catch (error) {
-      throw error
-    }
-  },
   getSystemHealth: () => ({
     cpuUsage: os.loadavg(),
     totalMemory: `${(os.totalmem() / 1024 / 1024).toFixed(2)} MB`,
     freeMemory: `${(os.freemem() / 1024 / 1024).toFixed(2)} MB`
   }),
+
   getApplicationHealth: () => ({
     environment: config.ENV,
     upTime: `${process.uptime().toFixed(2)} seconds`,
@@ -32,6 +25,7 @@ export default {
       )} MB`
     }
   }),
+
   parsePhoneNumber: (phoneNumber: string) => {
     try {
       const parsedPhoneNumber = parsePhoneNumber(phoneNumber)
@@ -57,16 +51,17 @@ export default {
       }
     }
   },
+
   countryTimezone: (isoCode: string) => getTimezonesForCountry(isoCode),
+
   generateRandomId: v4,
+
   generateOtp: (length: number) => {
     const min = Math.pow(10, length - 1)
     const max = Math.pow(10, length) - 1
     return randomInt(min, max).toString()
   },
-  generateToken: (payload: object, secret: string, expiry: number) =>
-    jwt.sign(payload, secret, { expiresIn: expiry }),
-  verifyToken: (token: string, secret: string) => jwt.verify(token, secret),
+
   generatePasswordResetExpiry: (minutes: number) =>
     dayjs().valueOf() + minutes * 60 * 1000
 }

@@ -2,9 +2,9 @@ import { NextFunction, Request, Response } from 'express'
 import config from '../config'
 import responseMessage from '../constant/responseMessage'
 import userDao from '../dataAccess/userDao'
+import tokenService from '../service/tokenService'
 import { IDecryptedJwt, IUser } from '../types/userTypes'
 import httpError from '../utils/httpError'
-import quicker from '../utils/quicker'
 
 interface IAuthenticatedRequest extends Request {
   authenticatedUser: IUser
@@ -26,7 +26,7 @@ export default async (req: Request, _res: Response, next: NextFunction) => {
       )
     }
 
-    const { userId } = quicker.verifyToken(
+    const { userId } = tokenService.verifyToken(
       accessToken,
       config.ACCESS_TOKEN.ACCESS_TOKEN_SECRET
     ) as IDecryptedJwt
