@@ -4,7 +4,7 @@ import { NextFunction, Request, Response } from 'express'
 import config from '../../config'
 import responseMessage from '../../constant/responseMessage'
 import catchAsyncError from '../../errors/catchAsyncError'
-import crypto from '../../service/crypto'
+import cryptoService from '../../service/cryptoService'
 import dbService from '../../service/dbService'
 import emailService from '../../service/emailService'
 import {
@@ -142,7 +142,7 @@ export const resetPassword = catchAsyncError(
     }
 
     const { newPassword } = value
-    const hashedPassword = await crypto.hashPassword(newPassword)
+    const hashedPassword = await cryptoService.hashPassword(newPassword)
 
     user.password = hashedPassword
     user.passwordReset.token = null
@@ -199,7 +199,7 @@ export const changePassword = catchAsyncError(
       )
     }
 
-    const isOldPasswordValid = await crypto.comparePassword(
+    const isOldPasswordValid = await cryptoService.comparePassword(
       oldPassword,
       user.password
     )
@@ -212,7 +212,7 @@ export const changePassword = catchAsyncError(
       )
     }
 
-    const hashedNewPassword = await crypto.hashPassword(newPassword)
+    const hashedNewPassword = await cryptoService.hashPassword(newPassword)
     user.password = hashedNewPassword
     await user.save()
 

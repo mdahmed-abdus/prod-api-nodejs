@@ -5,7 +5,7 @@ import config from '../../config'
 import responseMessage from '../../constant/responseMessage'
 import { EUserRole } from '../../constant/userConstant'
 import catchAsyncError from '../../errors/catchAsyncError'
-import crypto from '../../service/crypto'
+import cryptoService from '../../service/cryptoService'
 import dbService from '../../service/dbService'
 import emailService from '../../service/emailService'
 import {
@@ -89,7 +89,7 @@ export const register = catchAsyncError(
       )
     }
 
-    const hashedPassword = await crypto.hashPassword(password)
+    const hashedPassword = await cryptoService.hashPassword(password)
 
     const token = quicker.generateRandomId()
     const code = quicker.generateOtp(6)
@@ -147,7 +147,7 @@ export const login = catchAsyncError(
       )
     }
 
-    const isValidPassword = await crypto.comparePassword(
+    const isValidPassword = await cryptoService.comparePassword(
       password,
       user.password
     )
