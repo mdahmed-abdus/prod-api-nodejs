@@ -12,8 +12,8 @@ router.route('/self').get(rateLimit, self)
 router.route('/identify').get(auth, identify)
 router.route('/health').get(rateLimit, health)
 
-// base_url/api/v1/users/...
-router.use('/users', userRouter)
+// base_url/api/v1/user/...
+router.use('/user', userRouter)
 
 // base_url/api/v1/password/...
 router.use('/password', passwordRouter)
