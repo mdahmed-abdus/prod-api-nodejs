@@ -1,5 +1,5 @@
 import { Application } from 'express'
-import notFoundHandler from '../errors/notFoundHandler'
+import notFoundHandler from '../error/notFoundHandler'
 import apiRouterV1 from './v1/apiRouter'
 
 export default (app: Application) => {

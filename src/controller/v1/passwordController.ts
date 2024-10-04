@@ -4,7 +4,7 @@ import { NextFunction, Request, Response } from 'express'
 import config from '../../config'
 import responseMessage from '../../constant/responseMessage'
 import userDao from '../../dataAccess/userDao'
-import catchAsyncError from '../../errors/catchAsyncError'
+import catchAsyncError from '../../error/catchAsyncError'
 import cryptoService from '../../service/cryptoService'
 import emailService from '../../service/emailService'
 import {

@@ -1,5 +1,5 @@
 import express from 'express'
-import appError from './errors/appError'
+import appError from './error/appError'
 import appMiddleware from './middleware/appMiddleware'
 import appRoute from './router/appRoute'
 

@@ -1,5 +1,5 @@
 import { NextFunction, Request } from 'express'
-import errorObject from '../errors/errorObject'
+import errorObject from '../error/errorObject'
 
 export default (
   nextFunc: NextFunction,
