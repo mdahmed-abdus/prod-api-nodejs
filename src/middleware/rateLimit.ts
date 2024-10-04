@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import config from '../config'
-import { rateLimiterMongo } from '../config/rateLimiterConfig'
 import responseMessage from '../constant/responseMessage'
+import { rateLimiterMongo } from '../service/rateLimiterService'
 import httpError from '../utils/httpError'
 
 export default (req: Request, _: Response, next: NextFunction) => {
