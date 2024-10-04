@@ -3,9 +3,9 @@ import utc from 'dayjs/plugin/utc'
 import { NextFunction, Request, Response } from 'express'
 import config from '../../config'
 import responseMessage from '../../constant/responseMessage'
+import userDao from '../../dataAccess/userDao'
 import catchAsyncError from '../../errors/catchAsyncError'
 import cryptoService from '../../service/cryptoService'
-import dbService from '../../service/dbService'
 import emailService from '../../service/emailService'
 import {
   validateChangePasswordBody,
@@ -54,7 +54,7 @@ export const forgotPassword = catchAsyncError(
 
     const { email } = value
 
-    const user = await dbService.findUserByEmail(email)
+    const user = await userDao.findUserByEmail(email)
     if (!user) {
       return httpError(
         next,
@@ -106,7 +106,7 @@ export const resetPassword = catchAsyncError(
     }
 
     const { token } = params
-    const user = await dbService.findUserByResetToken(token)
+    const user = await userDao.findUserByResetToken(token)
     if (!user) {
       return httpError(
         next,
@@ -175,10 +175,7 @@ export const changePassword = catchAsyncError(
       return httpError(next, error, req, 422)
     }
 
-    const user = await dbService.findUserById(
-      authenticatedUser._id,
-      '+password'
-    )
+    const user = await userDao.findUserById(authenticatedUser._id, '+password')
     if (!user) {
       return httpError(
         next,

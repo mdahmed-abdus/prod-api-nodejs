@@ -4,9 +4,10 @@ import { NextFunction, Request, Response } from 'express'
 import config from '../../config'
 import responseMessage from '../../constant/responseMessage'
 import { EUserRole } from '../../constant/userConstant'
+import refreshTokenDao from '../../dataAccess/refreshTokenDao'
+import userDao from '../../dataAccess/userDao'
 import catchAsyncError from '../../errors/catchAsyncError'
 import cryptoService from '../../service/cryptoService'
-import dbService from '../../service/dbService'
 import emailService from '../../service/emailService'
 import {
   validateJoiSchema,
@@ -79,7 +80,7 @@ export const register = catchAsyncError(
       )
     }
 
-    const user = await dbService.findUserByEmail(email)
+    const user = await userDao.findUserByEmail(email)
     if (user) {
       return httpError(
         next,
@@ -107,7 +108,7 @@ export const register = catchAsyncError(
       consent
     }
 
-    const newUser = await dbService.registerUser(payload)
+    const newUser = await userDao.registerUser(payload)
 
     const confirmationUrl = `${config.FRONTEND_URL}/confirmation/${token}?code=${code}`
     const to = [email]
@@ -137,7 +138,7 @@ export const login = catchAsyncError(
 
     const { email, password } = value
 
-    const user = await dbService.findUserByEmail(email, '+password')
+    const user = await userDao.findUserByEmail(email, '+password')
     if (!user) {
       return httpError(
         next,
@@ -174,7 +175,7 @@ export const login = catchAsyncError(
 
     const refreshTokenPayload: IRefreshToken = { token: refreshToken }
 
-    await dbService.createRefreshToken(refreshTokenPayload)
+    await refreshTokenDao.createRefreshToken(refreshTokenPayload)
 
     user.lastLoginAt = dayjs().utc().toDate()
     await user.save()
@@ -211,7 +212,7 @@ export const logout = catchAsyncError(async (req: Request, res: Response) => {
   const { refreshToken } = cookies as { refreshToken: string | null }
 
   if (refreshToken) {
-    await dbService.deleteRefreshToken(refreshToken)
+    await refreshTokenDao.deleteRefreshToken(refreshToken)
   }
 
   const domain = quicker.getDomainFromUrl(config.APP_URL)
@@ -243,7 +244,7 @@ export const confirmation = catchAsyncError(
     const { token } = params
     const { code } = query
 
-    const user = await dbService.findUserByConfirmationTokenAndCode(token, code)
+    const user = await userDao.findUserByConfirmationTokenAndCode(token, code)
     if (!user) {
       return httpError(
         next,
@@ -312,7 +313,7 @@ export const refreshToken = catchAsyncError(
       return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401)
     }
 
-    const rft = await dbService.getRefreshToken(refreshToken)
+    const rft = await refreshTokenDao.getRefreshToken(refreshToken)
     if (!rft) {
       return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401)
     }
