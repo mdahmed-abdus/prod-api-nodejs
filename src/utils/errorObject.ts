@@ -1,7 +1,7 @@
 import { Request } from 'express'
 import config from '../config'
 import responseMessage from '../constant/responseMessage'
-import { THttpError } from '../types/types'
+import { THttpError } from '../types/httpTypes'
 import logger from './logger'
 
 export default (

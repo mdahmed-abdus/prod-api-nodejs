@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import config from '../config'
-import { THttpResponse } from '../types/types'
+import { THttpResponse } from '../types/httpTypes'
 import logger from './logger'
 
 export default (

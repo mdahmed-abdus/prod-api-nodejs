@@ -1,5 +1,5 @@
 import { Application, NextFunction, Request, Response } from 'express'
-import { THttpError } from '../types/types'
+import { THttpError } from '../types/httpTypes'
 
 export default (app: Application) => {
   app.use(
