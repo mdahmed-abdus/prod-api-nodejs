@@ -1,7 +1,7 @@
 import { connection } from 'mongoose'
 import app from './app'
 import config from './config'
-import { initRateLimiter } from './config/rateLimiter'
+import { initRateLimiter } from './config/rateLimiterConfig'
 import dbService from './service/dbService'
 import logger from './utils/logger'
 
