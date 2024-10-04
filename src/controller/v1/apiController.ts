@@ -9,7 +9,7 @@ import httpResponse from '../../utils/httpResponse'
 
 dayjs.extend(utc)
 
-interface ISelfIdentificationRequest extends Request {
+interface IIdentifyRequest extends Request {
   authenticatedUser: IUser
 }
 
@@ -18,7 +18,7 @@ export const self = catchAsyncError((req: Request, res: Response) => {
 })
 
 export const identify = catchAsyncError((req: Request, res: Response) => {
-  const { authenticatedUser } = req as ISelfIdentificationRequest
+  const { authenticatedUser } = req as IIdentifyRequest
   httpResponse(req, res, 200, responseMessage.SUCCESS, authenticatedUser)
 })
 
