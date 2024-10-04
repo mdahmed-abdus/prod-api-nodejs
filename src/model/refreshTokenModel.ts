@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
 import config from '../config'
-import { IRefreshToken } from '../types/userTypes'
+import { IRefreshToken } from '../types/tokenTypes'
 
 const refreshTokenSchema = new mongoose.Schema<IRefreshToken>(
   {

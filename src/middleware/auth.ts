@@ -3,7 +3,8 @@ import config from '../config'
 import responseMessage from '../constant/responseMessage'
 import userDao from '../dataAccess/userDao'
 import tokenService from '../service/tokenService'
-import { IDecryptedJwt, IUser } from '../types/userTypes'
+import { IDecryptedJwt } from '../types/tokenTypes'
+import { IUser } from '../types/userTypes'
 import httpError from '../utils/httpError'
 
 interface IAuthenticatedRequest extends Request {

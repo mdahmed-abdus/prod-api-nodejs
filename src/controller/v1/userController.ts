@@ -15,10 +15,9 @@ import {
   validateLoginBody,
   validateRegisterBody
 } from '../../service/validationService'
+import { IDecryptedJwt, IRefreshToken } from '../../types/tokenTypes'
 import {
-  IDecryptedJwt,
   ILoginRequestBody,
-  IRefreshToken,
   IRegisterRequestBody,
   IUser
 } from '../../types/userTypes'

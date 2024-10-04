@@ -16,9 +16,9 @@ import {
 import {
   IChangePasswordRequestBody,
   IForgotPasswordRequestBody,
-  IResetPasswordRequestBody,
-  IUserWithId
-} from '../../types/userTypes'
+  IResetPasswordRequestBody
+} from '../../types/passwordTypes'
+import { IUserWithId } from '../../types/userTypes'
 import utils from '../../utils'
 import httpError from '../../utils/httpError'
 import httpResponse from '../../utils/httpResponse'

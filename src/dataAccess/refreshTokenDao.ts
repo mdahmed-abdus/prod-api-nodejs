@@ -1,5 +1,5 @@
 import refreshTokenModel from '../model/refreshTokenModel'
-import { IRefreshToken } from '../types/userTypes'
+import { IRefreshToken } from '../types/tokenTypes'
 
 export default {
   createRefreshToken: (payload: IRefreshToken) =>
