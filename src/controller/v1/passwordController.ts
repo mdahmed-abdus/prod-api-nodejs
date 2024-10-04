@@ -3,6 +3,7 @@ import utc from 'dayjs/plugin/utc'
 import { NextFunction, Request, Response } from 'express'
 import config from '../../config'
 import responseMessage from '../../constant/responseMessage'
+import catchAsyncError from '../../errors/catchAsyncError'
 import crypto from '../../service/crypto'
 import dbService from '../../service/dbService'
 import emailService from '../../service/emailService'
@@ -39,12 +40,8 @@ interface IChangePasswordRequest extends Request {
   body: IChangePasswordRequestBody
 }
 
-export const forgotPassword = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
+export const forgotPassword = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
     const { body } = req as IForgotPasswordRequest
 
     const { error, value } = validateJoiSchema<IForgotPasswordRequestBody>(
@@ -94,17 +91,11 @@ export const forgotPassword = async (
     })
 
     httpResponse(req, res, 200, responseMessage.SUCCESS)
-  } catch (error) {
-    httpError(next, error, req, 500)
   }
-}
+)
 
-export const resetPassword = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
+export const resetPassword = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
     const { body, params } = req as IResetPasswordRequest
     const { error, value } = validateJoiSchema<IResetPasswordRequestBody>(
       validateResetPasswordBody,
@@ -169,17 +160,11 @@ export const resetPassword = async (
     })
 
     httpResponse(req, res, 200, responseMessage.SUCCESS)
-  } catch (error) {
-    httpError(next, error, req, 500)
   }
-}
+)
 
-export const changePassword = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
+export const changePassword = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
     const { body, authenticatedUser } = req as IChangePasswordRequest
 
     const { error, value } = validateJoiSchema<IChangePasswordRequestBody>(
@@ -241,7 +226,5 @@ export const changePassword = async (
     })
 
     httpResponse(req, res, 200, responseMessage.SUCCESS)
-  } catch (error) {
-    httpError(next, error, req, 500)
   }
-}
+)

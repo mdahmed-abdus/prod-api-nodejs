@@ -4,6 +4,7 @@ import { NextFunction, Request, Response } from 'express'
 import config from '../../config'
 import responseMessage from '../../constant/responseMessage'
 import { EUserRole } from '../../constant/userConstant'
+import catchAsyncError from '../../errors/catchAsyncError'
 import crypto from '../../service/crypto'
 import dbService from '../../service/dbService'
 import emailService from '../../service/emailService'
@@ -43,12 +44,8 @@ interface ILoginRequest extends Request {
   body: ILoginRequestBody
 }
 
-export const register = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
+export const register = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
     const { body } = req as IRegisterRequest
 
     const { value, error } = validateJoiSchema<IRegisterRequestBody>(
@@ -123,17 +120,11 @@ export const register = async (
     })
 
     httpResponse(req, res, 201, responseMessage.SUCCESS, { _id: newUser._id })
-  } catch (error) {
-    httpError(next, error, req, 500)
   }
-}
+)
 
-export const login = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
+export const login = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
     const { body } = req as ILoginRequest
 
     const { value, error } = validateJoiSchema<ILoginRequestBody>(
@@ -212,56 +203,42 @@ export const login = async (
       accessToken,
       refreshToken
     })
-  } catch (error) {
-    httpError(next, error, req, 500)
   }
-}
+)
 
-export const logout = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { cookies } = req
-    const { refreshToken } = cookies as { refreshToken: string | null }
+export const logout = catchAsyncError(async (req: Request, res: Response) => {
+  const { cookies } = req
+  const { refreshToken } = cookies as { refreshToken: string | null }
 
-    if (refreshToken) {
-      await dbService.deleteRefreshToken(refreshToken)
-    }
-
-    const domain = quicker.getDomainFromUrl(config.APP_URL)
-
-    res
-      .clearCookie('accessToken', {
-        path: '/api/v1',
-        domain,
-        sameSite: 'strict',
-        maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
-        httpOnly: true,
-        secure: config.IN_PROD
-      })
-      .clearCookie('refreshToken', {
-        path: '/api/v1',
-        domain,
-        sameSite: 'strict',
-        maxAge: 1000 * config.REFRESH_TOKEN.EXPIRY,
-        httpOnly: true,
-        secure: config.IN_PROD
-      })
-
-    httpResponse(req, res, 200, responseMessage.SUCCESS)
-  } catch (error) {
-    httpError(next, error, req, 500)
+  if (refreshToken) {
+    await dbService.deleteRefreshToken(refreshToken)
   }
-}
 
-export const confirmation = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
+  const domain = quicker.getDomainFromUrl(config.APP_URL)
+
+  res
+    .clearCookie('accessToken', {
+      path: '/api/v1',
+      domain,
+      sameSite: 'strict',
+      maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
+      httpOnly: true,
+      secure: config.IN_PROD
+    })
+    .clearCookie('refreshToken', {
+      path: '/api/v1',
+      domain,
+      sameSite: 'strict',
+      maxAge: 1000 * config.REFRESH_TOKEN.EXPIRY,
+      httpOnly: true,
+      secure: config.IN_PROD
+    })
+
+  httpResponse(req, res, 200, responseMessage.SUCCESS)
+})
+
+export const confirmation = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
     const { params, query } = req as IConfirmRequest
     const { token } = params
     const { code } = query
@@ -300,17 +277,11 @@ export const confirmation = async (
     })
 
     httpResponse(req, res, 200, responseMessage.SUCCESS)
-  } catch (error) {
-    httpError(next, error, req, 500)
   }
-}
+)
 
-export const refreshToken = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
+export const refreshToken = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
     const { cookies } = req
     const { refreshToken, accessToken } = cookies as {
       refreshToken: string | null
@@ -373,7 +344,5 @@ export const refreshToken = async (
     } catch {
       return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401)
     }
-  } catch (error) {
-    httpError(next, error, req, 500)
   }
-}
+)
