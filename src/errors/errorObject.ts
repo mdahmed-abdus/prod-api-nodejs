@@ -2,7 +2,7 @@ import { Request } from 'express'
 import config from '../config'
 import responseMessage from '../constant/responseMessage'
 import { THttpError } from '../types/httpTypes'
-import logger from './logger'
+import logger from '../utils/logger'
 
 export default (
   // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
